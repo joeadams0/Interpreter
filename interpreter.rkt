@@ -1,9 +1,10 @@
 (load "verySimpleParser.scm")
 (load "environment.rkt")
+(load "Interpreter_value.rkt")
 ; Begins interpretation process
-(define interprete
+(define interpret
   (lambda (filename)
-    (lookup 'return (stmt-list (parser filename) (new-environment))))
+    (lookup 'return (stmt-list (parser filename) (new-environment)))))
 
 ; Interpretes the statement list
 ; p is a parsetree, e is the environment
@@ -54,9 +55,7 @@
 ; Returns the value of the statement, predicate or otherwise 
 ; s is the statement, e is the environment
 ; returns an int or a boolean
-(define value
-  (lambda (s e)
-    s))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Helpers
