@@ -1,17 +1,6 @@
 ;OPERATOR/OPERAND PARSING FUNCTIONS==============================
 ;FORMAT: (operator operand1 operand2)
-;returns the car of the cdr of a list. Assumes operator is in front of operands.
-(define operator
-  (lambda (ex)
-    (car ex)))
-;returns the car of a list
-(define operand1
-  (lambda (ex)
-    (car (cdr ex))))
-;returns the cdr of the cdr of a list
-(define operand2
-  (lambda (ex)
-     (cdr (cdr ex))))
+; moved to interpreter.rkt
 ;END OPERATOR/OPERAND PARSING FUNCTIONS==============================
 
 ;EXPRESSION CHECKING FUNCTIONS===============================
