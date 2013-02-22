@@ -5,7 +5,7 @@
 ; Begins interpretation process
 (define interpret
   (lambda (filename)
-    (stmt-list (parser filename) (new-environment))))
+    (lookup 'return (stmt-list (parser filename) (new-environment)))))
 
 ; Interpretes the statement list
 ; p is a parsetree, e is the environment
