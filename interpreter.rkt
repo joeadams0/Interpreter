@@ -1,5 +1,7 @@
 (load "verySimpleParser.scm")
 (load "environment.rkt")
+(load "Interpreter_value.rkt")
+
 ; Begins interpretation process
 (define interpret
   (lambda (filename)
@@ -27,7 +29,6 @@
 (define if-stmt
   (lambda (s e)
     e))
-      
 
 ; Interpretes the define a variable statement
 ; s is the statement, e is the environment
@@ -56,10 +57,8 @@
 
 ; Returns the value of the statement, predicate or otherwise 
 ; s is the statement, e is the environment
-; returns a list which is: (value environmet)
-(define value
-  (lambda (s e)
-    s))
+; returns an int or a boolean
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Helpers

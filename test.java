@@ -1,3 +1,4 @@
-var x;
-var y = 5;
-return 1;
+if(x<y)
+	y = y+1;
+else if(z == 2)
+	return y;
