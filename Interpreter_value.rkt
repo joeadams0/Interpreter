@@ -8,9 +8,9 @@
 (define expression?
   (lambda (ex e)
     (cond
+      ((bool? ex e) #t)
       ((math? ex e) #t)
       ((predicate? ex e) #t)
-      ((bool? ex e) #t)
       (else #f))))
 ;returns #t if the list is a valid math expression, #f otherwise
 (define math?
@@ -47,8 +47,10 @@
                         (or (eq? (lookup ex e) #t)(eq? (lookup ex e) #f)) #t
                         #f))
       ((null? (cdr ex)) (bool? (car ex)))
-      ((not (= (length ex) 3)) #f)
-      ((or (eq? '! (operator ex)) (eq? '&& (operator ex)) (eq? '|| (operator ex)))(and (bool? (operand1 ex)) (bool? (operand2 ex))))
+      ((not (= (length ex) 3)) (if
+                                (and (= (length ex) 2) (eq? '! (operator ex))) (or(bool? (operand1 ex)e)(predicate? (operand1 ex) e))
+                                #f))
+      ((or (eq? '&& (operator ex)) (eq? '|| (operator ex)))(and (bool? (operand1 ex) e) (bool? (operand2 ex) e)))
       (else #f))))
 ;END EXPRESSION CHECKING FUNCTIONS===============================
 
@@ -60,9 +62,9 @@
   (lambda (ex e)
     (cond
       ((null? ex) 'youfuckedup)
+      ((bool? ex e) (bval ex e))
       ((math? ex e) (mathexvalue ex e))
       ((predicate? ex e) (predvalue ex e))
-      ((bool? (car ex ) e) (bval ex e))
       (else 'youfuckedup))))
 ;returns the evaluated value of a math-only expression. 
 (define mathexvalue
@@ -96,14 +98,13 @@
 (define bval
   (lambda (ex e)
     (cond
-      ((number? ex) ex)
-      ((not(null? (lookup ex e))) (lookup ex e))
+      ((not(null? (lookup ex e))) (teamup (lookup ex e)e))
       ((null? (cdr ex)) (bval (car ex) e))
       ((not(bool? ex e)) (value ex e))
       (else (cond
-              ((eq? '! (operator ex)) (handleapply not (bval (operand1 ex) e)(operand2 ex)))
-              ((eq? '&& (operator ex)) (handleapply and (predvalue (operand1 ex)e) (operand2 ex)))
-              ((eq? '|| (operator ex)) (handleapply or (bval (operand1 ex) e)(operand2 ex))))))))
+              ((eq? '! (operator ex)) (teamup (not (get-val(value (operand1 ex) e))) (get-env (value (operand1 ex) e))))
+              ((eq? '&& (operator ex)) (handleapply (lambda (a b) (and a b)) (bval (operand1 ex)e) (operand2 ex)))
+              ((eq? '|| (operator ex)) (handleapply (lambda (a b) (or a b)) (bval (operand1 ex) e)(operand2 ex))))))))
 ;END EVALUATOR FUNCTIONS=========================================
 
 ;HELPER FUNCTIONS================================================
