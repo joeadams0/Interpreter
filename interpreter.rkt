@@ -28,10 +28,6 @@
 ; returns an environment
 (define if-stmt
   (lambda (s e)
-    (display e)
-    (newline)
-    (display (value (operand1 s) e))
-    (newline)
     (cond
       ; If it is an if statement 
       ((eq? (operator s) 'if) (if-wrapper (value (operand1 s) e) (operand2 s) (operand3 s)))
