@@ -65,7 +65,7 @@
       ((bool? ex e) (bval ex e))
       ((math? ex e) (mathexvalue ex e))
       ((predicate? ex e) (predvalue ex e))
-      (else 'youfuckedup))))
+      (else (error 'value "Invalid expression")))))
 ;returns the evaluated value of a math-only expression. 
 (define mathexvalue
   (lambda (ex e)

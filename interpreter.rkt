@@ -165,8 +165,6 @@
 ; Returns an environment
 (define if-wrapper
   (lambda (l then else)
-    (display l)
-    (newline)
     (if-eval (get-val l) then else (get-env l))))
 
 ; Wrappes the set-var function. var is the variable to set and l is the (value environment) pair
