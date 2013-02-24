@@ -10,7 +10,7 @@
     (cond
       ((math? ex e) #t)
       ((predicate? ex e) #t)
-;      ((bool? ex e) #t)
+      ((bool? ex e) #t)
       (else #f))))
 ;returns #t if the list is a valid math expression, #f otherwise
 (define math?
@@ -26,7 +26,7 @@
                (math? (cons (car(cdr(cdr ex))) (cdr (cdr(cdr ex)))) e)))
          (else #f)))
       ((or (eq? '= (operator ex)) (eq? '+ (operator ex)) (eq? '- (operator ex)) (eq? '* (operator ex)) (eq? '/ (operator ex)) (eq? '% (operator ex)))(and (math? (operand1 ex) e) (math? (operand2 ex) e)))
-      (else (not(null? (lookup ex e)))))))
+      (else #f))))
 ;returns #t if the list is a valid predicate function, #f otherwise
 (define predicate?
   (lambda (ex e)
@@ -53,16 +53,17 @@
 ;END EXPRESSION CHECKING FUNCTIONS===============================
 
 ;THE EVALUATOR FUNCTIONS=========================================
-;the main thing the rest of the interpreter calls.
+;the main thing the rest of the interpreter calls. It evaluates valid math, predicate and boolean functions. if you pass in something else, it hates you
+;it takes the expression (which can contian nested expressions) and an environment
+;it returns a (value environment) pair, or an error message
 (define value
   (lambda (ex e)
     (cond
-      ((null? ex) 0)
+      ((null? ex) 'youfuckedup)
       ((math? ex e) (mathexvalue ex e))
       ((predicate? ex e) (predvalue ex e))
-;      ((bool? (car ex ) e)              )
+      ((bool? (car ex ) e) (bval ex e))
       (else 'youfuckedup))))
-
 ;returns the evaluated value of a math-only expression. 
 (define mathexvalue
   (lambda (ex e)
@@ -81,8 +82,8 @@
 (define predvalue
   (lambda (ex e)
     (cond
-      ((number? ex) ex)
-      ((not(null? (lookup ex e))) (lookup ex e))
+      ((number? ex) (teamup ex e))
+      ((not(null? (lookup ex e))) (teamup(lookup ex e)e))
       ((null? (cdr ex)) (predvalue (car ex) e))
       ((not(predicate? ex e)) (value ex e))
       (else (cond
@@ -92,7 +93,20 @@
               ((eq? '< (operator ex)) (handleapply < (predvalue (operand1 ex) e)(operand2 ex)))
               ((eq? '<= (operator ex)) (handleapply <= (predvalue (operand1 ex) e)(operand2 ex)))
               ((eq? '>= (operator ex)) (handleapply >= (predvalue (operand1 ex) e)(operand2 ex))))))))
+(define bval
+  (lambda (ex e)
+    (cond
+      ((number? ex) ex)
+      ((not(null? (lookup ex e))) (lookup ex e))
+      ((null? (cdr ex)) (bval (car ex) e))
+      ((not(bool? ex e)) (value ex e))
+      (else (cond
+              ((eq? '! (operator ex)) (handleapply not (bval (operand1 ex) e)(operand2 ex)))
+              ((eq? '&& (operator ex)) (handleapply and (predvalue (operand1 ex)e) (operand2 ex)))
+              ((eq? '|| (operator ex)) (handleapply or (bval (operand1 ex) e)(operand2 ex))))))))
+;END EVALUATOR FUNCTIONS=========================================
 
+;HELPER FUNCTIONS================================================
 (define teamup
   (lambda (val e)
     (cons val (cons e '()))))
