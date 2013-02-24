@@ -28,6 +28,10 @@
 ; returns an environment
 (define if-stmt
   (lambda (s e)
+    (display e)
+    (newline)
+    (display (value (operand1 s) e))
+    (newline)
     (cond
       ; If it is an if statement 
       ((eq? (operator s) 'if) (if-wrapper (value (operand1 s) e) (operand2 s) (operand3 s)))
@@ -165,6 +169,8 @@
 ; Returns an environment
 (define if-wrapper
   (lambda (l then else)
+    (display l)
+    (newline)
     (if-eval (get-val l) then else (get-env l))))
 
 ; Wrappes the set-var function. var is the variable to set and l is the (value environment) pair
