@@ -43,9 +43,9 @@
   (lambda (s e)
     (cond
       ; Just declare statement
-      ((null? (operand2 s)) (set-var(operand1 s) '0 e))
+      ((null? (operand2 s)) (set-var (operand1 s) '0 e))
       ; declare and assign
-      (else (set-var (operand1 s) (value (operand2 s) e) e)))))
+      (else (set-var-wrapper (operand1 s) (value (operand2 s) e))))))
 
 ; Interpretes the variable assignment statement
 ; s is the statement, e is the environment
@@ -55,14 +55,14 @@
     (cond
       ((null?(lookup (operand1 s) e)) (error 'interpreter "Variable not declared"))
       ; Return the value consed onto a list containing the environment
-      (else (cons (operand1 s) (cons (set-var (operand1 s) (value (operand2 s) e) e) '()))))))
+      (else (cons (operand1 s) (cons (set-var-wrapper (operand1 s) (value (operand2 s) e)) '()))))))
 
 ; Interpretes the return statement
 ; s is the statement, e is the environment
 ; returns an environment
 (define return-stmt
   (lambda(s e)
-    (set-var 'return (value (car (cdr s)) e) e)))
+    (set-var-wrapper 'return (value (car (cdr s)) e))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Helpers
@@ -153,6 +153,8 @@
 ; Returns the value from a list: (value environment)
 (define get-val
   (lambda (l)
+    (display l)
+    (newline)
     (cond 
       ((not (pair? l)) (error 'get-val "Bad List"))
       (else (car l)))))
@@ -167,4 +169,9 @@
 (define if-wrapper
   (lambda (l then else)
     (if-eval (get-val l) then else (get-env l))))
+
+; Wrappes the set-var function. var is the variable to set and l is the (value environment) pair
+(define set-var-wrapper
+  (lambda (var l)
+    (set-var var (get-val l) (get-env l))))
 

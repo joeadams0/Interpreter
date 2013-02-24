@@ -1,8 +1,8 @@
 ; The environment for the interpreter
-; Return empty list
+; Return a new environment with true and false defined
 (define new-environment
   (lambda ()
-    '()))
+    (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t '()))))))
 
 ; Bind the variable to the value in the environment
 ; returns null
