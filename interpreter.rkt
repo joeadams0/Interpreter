@@ -30,8 +30,7 @@
   (lambda (s e)
     (cond
       ; If it is an if statement 
-      ((eq? (operator s) 'if)
-       (if-wrapper (value (operand1 s) e) (operand2 s) (operand3 s)))
+      ((eq? (operator s) 'if) (if-wrapper (value (operand1 s) e) (operand2 s) (operand3 s)))
       ; else statement
       (stmt s e))))
       
@@ -55,7 +54,7 @@
     (cond
       ((null?(lookup (operand1 s) e)) (error 'interpreter "Variable not declared"))
       ; Return the value consed onto a list containing the environment
-      (else (cons (operand1 s) (cons (set-var-wrapper (operand1 s) (value (operand2 s) e)) '()))))))
+      (else (assign-wrapper (operand1 s) (value (operand2 s) e)))))) 
 
 ; Interpretes the return statement
 ; s is the statement, e is the environment
@@ -153,8 +152,6 @@
 ; Returns the value from a list: (value environment)
 (define get-val
   (lambda (l)
-    (display l)
-    (newline)
     (cond 
       ((not (pair? l)) (error 'get-val "Bad List"))
       (else (car l)))))
@@ -175,3 +172,7 @@
   (lambda (var l)
     (set-var var (get-val l) (get-env l))))
 
+; Wraps the assignment stmt for sideeffects
+(define assign-wrapper
+  (lambda (var val)
+    (teamup (get-val val) (set-var-wrapper var val))))
