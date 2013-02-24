@@ -18,7 +18,7 @@
     (cond
       ((null? ex) #f)
       ((number? ex) #t)
-      ((not (pair? ex)) (number? (lookup ex e)))
+      ((not (pair? ex)) (or(number? (lookup ex e))(or (eq? (lookup ex e) #t)(eq? (lookup ex e) #f))))
       ((null? (cdr ex)) (math? (car ex) e))
       ((not (= (length ex) 3)) 
        (cond
