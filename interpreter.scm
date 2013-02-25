@@ -1,6 +1,6 @@
 (load "verySimpleParser.scm")
-(load "environment.rkt")
-(load "Interpreter_value.rkt")
+(load "environment.scm")
+(load "Interpreter_value.scm")
 
 ; Begins interpretation process
 (define interpret
