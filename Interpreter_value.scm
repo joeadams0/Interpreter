@@ -61,7 +61,7 @@
 (define value
   (lambda (ex e)
     (cond
-      ((null? ex) 'youfuckedup)
+      ((null? ex) (error 'value "Invalid expression"))
       ((bool? ex e) (bval ex e))
       ((math? ex e) (mathexvalue ex e))
       ((predicate? ex e) (predvalue ex e))
