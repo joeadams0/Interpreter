@@ -39,6 +39,8 @@
     (let ((nextsymbol (car (get-next-symbol))))
       (cond
         ((eq? nextsymbol 'if) (if-parse))
+        ((eq? nextsymbol 'while) (while-parse))
+        ((eq? nextsymbol 'LEFTBRACE) (cons 'begin (compound-statement-parse)))
         (else (begin
                 (unget-next-symbol)
                 (simple-statement-parse)))))))
@@ -52,10 +54,22 @@
       (begin
         (cond ((eq? (car nextsymbol) 'return) (set! parse-statement (return-parse)))
               ((eq? (car nextsymbol) 'var) (set! parse-statement (declare-parse)))
+              ((eq? (car nextsymbol) 'break) (set! parse-statement (list 'break)))
+              ((eq? (car nextsymbol) 'continue) (set! parse-statement (list 'continue)))
               (else (begin (unget-next-symbol) (set! parse-statement (assign-parse)))))
          (if (eq? (car (get-next-symbol)) 'SEMICOLON)
              parse-statement
              (error 'parser "Missing semicolon"))))))
+
+; parse a compound statement.  We already saw the left brace so continue until we see a right brace.
+
+(define compound-statement-parse
+  (lambda ()
+    (if (eq? (car (get-next-symbol)) 'RIGHTBRACE)
+        '()
+        (begin
+          (unget-next-symbol)
+          (cons (statement-parse) (compound-statement-parse))))))
 
 ; parse a return statement: return followed by a value.
 
@@ -79,6 +93,16 @@
                         (unget-next-symbol)
                         (list 'if condition if-statement)))))))))
 
+; parse a while statement: a condition followed by a statement
+
+(define while-parse
+  (lambda ()
+    (if (not (eq? (car (get-next-symbol)) 'LEFTPAREN))
+        (error 'parser "Missing opening parenthesis")
+        (let ((condition (value-parse)))
+          (if (not (eq? (car (get-next-symbol)) 'RIGHTPAREN))
+              (error 'parser "Missing closing parenthesis")
+              (list 'while condition (statement-parse)))))))
 
 ; parse a condition: a value followed by a comparison operator followed by a value.
 
