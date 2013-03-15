@@ -1,8 +1,1 @@
-var x = 10;
-var y = 11;
-var z = 10;
-if(x<y)
-	if(x < z)
-		return 1;
-	else
-		return 0;
+x = !y;

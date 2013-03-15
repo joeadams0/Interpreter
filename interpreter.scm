@@ -176,3 +176,7 @@
 (define assign-wrapper
   (lambda (var val)
     (teamup (get-val val) (set-var-wrapper var val))))
+
+(define teamup
+  (lambda (val e)
+    (cons val (cons e '()))))

@@ -108,9 +108,6 @@
 ;END EVALUATOR FUNCTIONS=========================================
 
 ;HELPER FUNCTIONS================================================
-(define teamup
-  (lambda (val e)
-    (cons val (cons e '()))))
 ;takes in a (value envirmonment) pair as lhs and an expression as rhs
 ;then it applies the f function to the value of lhs and the value of the evaluated rhs
 (define handleapply 
