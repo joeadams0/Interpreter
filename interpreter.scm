@@ -41,8 +41,9 @@
 (define define-stmt
   (lambda (s e)
     (cond
+      ((not (null? (lookup (operand1 s) e))) (error 'define-stmt "Variable is already defined"))
       ; Just declare statement
-      ((null? (operand2 s)) (set-var (operand1 s) '0 e))
+      ((null? (operand2 s)) (set-var (operand1 s) '(1) e))
       ; declare and assign
       (else (set-var-wrapper (operand1 s) (value (operand2 s) e))))))
 
@@ -50,9 +51,9 @@
 ; s is the statement, e is the environment
 ; returns a list which is (value environment)
 (define assign-stmt
-  (lambda (s e) 
+  (lambda (s e)
     (cond
-      ((null?(lookup (operand1 s) e)) (error 'interpreter "Variable not declared"))
+      ((null?(lookup (operand1 s) e)) (error 'assign-stmt "Variable not declared"))
       ; Return the value consed onto a list containing the environment
       (else (assign-wrapper (operand1 s) (value (operand2 s) e)))))) 
 
