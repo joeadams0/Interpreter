@@ -17,15 +17,24 @@
   (lambda (ex e)
     (cond
       ((null? ex) #f)
-      ((number? ex) #t)
-      ((not (pair? ex)) (or(number? (lookup ex e))(or (eq? (lookup ex e) #t)(eq? (lookup ex e) #f))))
+      ((or (boolean? ex) (number? ex)) #t)
+      ((not (pair? ex)) 
+       (cond
+         ((number? (lookup ex e)) #t)
+         ((boolean? (lookup ex e)) #t)
+         (else (error 'value "Variable declared but not assigned"))))
       ((null? (cdr ex)) (math? (car ex) e))
+      ((= (length ex) 2)
+       (if (eq? (operator ex) '-)
+           (math? (cdr ex) e)
+           (error 'value "Something is wrong")))
       ((not (= (length ex) 3)) 
        (cond
          ((and (math? (cons (car ex) (cons (car (cdr ex)) (cons(car (cdr (cdr ex))) '()))) e)
                (math? (cons (car(cdr(cdr ex))) (cdr (cdr(cdr ex)))) e)))
          (else #f)))
-      ((or (eq? '= (operator ex)) (eq? '+ (operator ex)) (eq? '- (operator ex)) (eq? '* (operator ex)) (eq? '/ (operator ex)) (eq? '% (operator ex)))(and (math? (operand1 ex) e) (math? (operand2 ex) e)))
+      ((eq? '= (operator ex)) (math? (operand2 ex) e))
+      ((or (eq? '+ (operator ex)) (eq? '- (operator ex)) (eq? '* (operator ex)) (eq? '/ (operator ex)) (eq? '% (operator ex)))(and (math? (operand1 ex) e) (math? (operand2 ex) e)))
       (else #f))))
 ;returns #t if the list is a valid predicate function, #f otherwise
 (define predicate?
@@ -50,7 +59,7 @@
       ((not (= (length ex) 3)) (if
                                 (and (= (length ex) 2) (eq? '! (operator ex))) (or(bool? (operand1 ex)e)(predicate? (operand1 ex) e))
                                 #f))
-      ((or (eq? '&& (operator ex)) (eq? '|| (operator ex)))(and (bool? (operand1 ex) e) (bool? (operand2 ex) e)))
+      ((or (eq? '&& (operator ex)) (eq? '|| (operator ex)))(and (expression? (operand1 ex) e) (expression? (operand2 ex) e)))
       (else #f))))
 ;END EXPRESSION CHECKING FUNCTIONS===============================
 
@@ -74,6 +83,10 @@
       ((not(null? (lookup ex e))) (lookup ex e)) ;is the expression a valid variable? return the value of the variable
       ((null? (cdr ex)) (mathexvalue (car ex) e))
       ((not(math? ex e)) 'notexpression)
+      ((= (length ex) 2)
+       (if (eq? (operator ex) '-)
+           (- 0 (mathexvalue(operand1 ex) e))
+           (error 'value "Something went wrong")))
       (else (cond
               ((eq? '= (operator ex)) (assign-stmt ex e))
               ((eq? '+ (operator ex)) (+(mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e)))
@@ -103,6 +116,6 @@
       ((not(bool? ex e)) (value ex e))
       (else (cond
               ((eq? '! (operator ex)) (not (value (operand1 ex) e)))
-              ((eq? '&& (operator ex)) ((lambda (a b) (and a b)) (bval (operand1 ex)e) (bval (operand2 ex)e)))
-              ((eq? '|| (operator ex)) ((lambda (a b) (or a b)) (bval (operand1 ex) e) (bval (operand2 ex)e))))))))
+              ((eq? '&& (operator ex)) ((lambda (a b) (and a b)) (value (operand1 ex)e) (value (operand2 ex)e)))
+              ((eq? '|| (operator ex)) ((lambda (a b) (or a b)) (value (operand1 ex) e) (value (operand2 ex)e))))))))
 ;END EVALUATOR FUNCTIONS=========================================
