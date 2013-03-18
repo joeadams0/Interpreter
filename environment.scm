@@ -7,7 +7,7 @@
 ; Bind the variable to the value in the environment
 ; Returns the new environment
 (define bind
-  (lambda (var value environment) 
+  (lambda (var value environment) git
     (cons (cons (cons var (get-vars (peek-layer environment))) (cons (cons (box value) (get-vals (peek-layer environment))) '())) (pop-layer environment))))
 
 ; Updates the value of the binding
