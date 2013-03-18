@@ -70,46 +70,39 @@
 (define mathexvalue
   (lambda (ex e)
     (cond
-      ((number? ex) (teamup ex e)) ;is the expression a number? return the number
-      ((not(null? (lookup ex e))) (teamup(lookup ex e) e)) ;is the expression a valid variable? return the value of the variable
+      ((number? ex) ex) ;is the expression a number? return the number
+      ((not(null? (lookup ex e))) (lookup ex e)) ;is the expression a valid variable? return the value of the variable
       ((null? (cdr ex)) (mathexvalue (car ex) e))
       ((not(math? ex e)) 'notexpression)
       (else (cond
               ((eq? '= (operator ex)) (assign-stmt ex e))
-              ((eq? '+ (operator ex)) (handleapply + (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '- (operator ex)) (handleapply - (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '/ (operator ex)) (handleapply quotient (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '* (operator ex)) (handleapply * (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '% (operator ex)) (handleapply remainder (mathexvalue (operand1 ex) e) (operand2 ex))))))))
+              ((eq? '+ (operator ex)) (+(mathexvalue (operand1 ex) e) (operand2 ex)))
+              ((eq? '- (operator ex)) (- (mathexvalue (operand1 ex) e) (operand2 ex)))
+              ((eq? '/ (operator ex)) (quotient (mathexvalue (operand1 ex) e) (operand2 ex)))
+              ((eq? '* (operator ex)) (* (mathexvalue (operand1 ex) e) (operand2 ex)))
+              ((eq? '% (operator ex)) (remainder (mathexvalue (operand1 ex) e) (operand2 ex))))))))
 (define predvalue
   (lambda (ex e)
     (cond
-      ((number? ex) (teamup ex e))
-      ((not(null? (lookup ex e))) (teamup(lookup ex e)e))
+      ((number? ex) ex)
+      ((not(null? (lookup ex e))) (lookup ex e))
       ((null? (cdr ex)) (predvalue (car ex) e))
       ((not(predicate? ex e)) (value ex e))
       (else (cond
-              ((eq? '== (operator ex)) (handleapply eq? (predvalue (operand1 ex) e)(operand2 ex)))
-              ((eq? '!= (operator ex)) (handleapply (lambda (a b) (not(eq? a b))) (predvalue (operand1 ex)e) (operand2 ex)))
-              ((eq? '> (operator ex)) (handleapply > (predvalue (operand1 ex) e)(operand2 ex)))
-              ((eq? '< (operator ex)) (handleapply < (predvalue (operand1 ex) e)(operand2 ex)))
-              ((eq? '<= (operator ex)) (handleapply <= (predvalue (operand1 ex) e)(operand2 ex)))
-              ((eq? '>= (operator ex)) (handleapply >= (predvalue (operand1 ex) e)(operand2 ex))))))))
+              ((eq? '== (operator ex)) (eq? (value (operand1 ex) e)(operand2 ex)))
+              ((eq? '!= (operator ex)) ((lambda (a b) (not(eq? a b))) (predvalue (operand1 ex)e) (operand2 ex)))
+              ((eq? '> (operator ex)) (> (value (operand1 ex) e)(operand2 ex)))
+              ((eq? '< (operator ex)) (< (value (operand1 ex) e)(operand2 ex)))
+              ((eq? '<= (operator ex)) (<= (value (operand1 ex) e)(operand2 ex)))
+              ((eq? '>= (operator ex)) (>= (value (operand1 ex) e)(operand2 ex))))))))
 (define bval
   (lambda (ex e)
     (cond
-      ((not(null? (lookup ex e))) (teamup (lookup ex e)e))
+      ((not(null? (lookup ex e))) (lookup ex e))
       ((null? (cdr ex)) (bval (car ex) e))
       ((not(bool? ex e)) (value ex e))
       (else (cond
-              ((eq? '! (operator ex)) (teamup (not (get-val(value (operand1 ex) e))) (get-env (value (operand1 ex) e))))
-              ((eq? '&& (operator ex)) (handleapply (lambda (a b) (and a b)) (bval (operand1 ex)e) (operand2 ex)))
-              ((eq? '|| (operator ex)) (handleapply (lambda (a b) (or a b)) (bval (operand1 ex) e)(operand2 ex))))))))
+              ((eq? '! (operator ex)) (not (value (operand1 ex) e)))
+              ((eq? '&& (operator ex)) ((lambda (a b) (and a b)) (bval (operand1 ex)e) (operand2 ex)))
+              ((eq? '|| (operator ex)) ((lambda (a b) (or a b)) (bval (operand1 ex) e)(operand2 ex))))))))
 ;END EVALUATOR FUNCTIONS=========================================
-
-;HELPER FUNCTIONS================================================
-;takes in a (value envirmonment) pair as lhs and an expression as rhs
-;then it applies the f function to the value of lhs and the value of the evaluated rhs
-(define handleapply 
-  (lambda (f lhs rhs)
-    (teamup (f (get-val lhs) (get-val (value rhs (get-env lhs)))) (get-env (value rhs (get-env lhs))))))
