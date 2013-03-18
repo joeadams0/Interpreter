@@ -14,6 +14,7 @@
   (lambda (p e)
     (cond
       ((null? p) e)
+      ((eq? (operator (car p)) '=) (stmt (car p) e) (stmt-list (cdr p) e))
       (else (stmt-list (cdr p) (stmt (car p) e))))))
 
 ; Interpretes a statement
@@ -30,7 +31,7 @@
   (lambda (s e)
     (cond
       ; If it is an if statement 
-      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s)))
+      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e))
       ; else statement
       (stmt s e))))
       
@@ -74,7 +75,7 @@
   (lambda (s)
     (define stmt-type? (stmt-type?-gen s))
     (cond
-      ((stmt-type? '=) assign-stmt-env)
+      ((stmt-type? '=) assign-stmt)
       ((stmt-type? 'if) if-stmt)
       ((stmt-type? 'var) define-stmt)
       ((stmt-type? 'return) return-stmt)
@@ -86,11 +87,15 @@
   (lambda (bool then else e)
     (cond
       ; Predicate evaluates to true, do the then stmt
-      (bool (stmt then e))
+      (bool (if (eq? (car then) 'begin) 
+                (stmt-list then e)
+                (stmt-list (cons then '()) e)))
       ; If there isn't another if or else stmt, then return the environment
       ((null? else) e)
       ; Do the else stmt
-      ((stmt else e)))))
+      (else (if (eq? (car else) 'begin) 
+                (stmt-list else e)
+                (stmt-list (cons else '()) e))))))
 
 ; Generates stmt-type? checkers for a given stmt
 ; Returns a function that can be called to check the type of the statement passed in

@@ -76,25 +76,25 @@
       ((not(math? ex e)) 'notexpression)
       (else (cond
               ((eq? '= (operator ex)) (assign-stmt ex e))
-              ((eq? '+ (operator ex)) (+(mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '- (operator ex)) (- (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '/ (operator ex)) (quotient (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '* (operator ex)) (* (mathexvalue (operand1 ex) e) (operand2 ex)))
-              ((eq? '% (operator ex)) (remainder (mathexvalue (operand1 ex) e) (operand2 ex))))))))
+              ((eq? '+ (operator ex)) (+(mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e)))
+              ((eq? '- (operator ex)) (- (mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e)))
+              ((eq? '/ (operator ex)) (quotient (mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e)))
+              ((eq? '* (operator ex)) (* (mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e)))
+              ((eq? '% (operator ex)) (remainder (mathexvalue (operand1 ex) e) (mathexvalue (operand2 ex) e))))))))
 (define predvalue
   (lambda (ex e)
     (cond
       ((number? ex) ex)
       ((not(null? (lookup ex e))) (lookup ex e))
       ((null? (cdr ex)) (predvalue (car ex) e))
-      ((not(predicate? ex e)) (value ex e))
+      ((not(predicate? ex e)) (value ex e)) 
       (else (cond
-              ((eq? '== (operator ex)) (eq? (value (operand1 ex) e)(operand2 ex)))
-              ((eq? '!= (operator ex)) ((lambda (a b) (not(eq? a b))) (predvalue (operand1 ex)e) (operand2 ex)))
-              ((eq? '> (operator ex)) (> (value (operand1 ex) e)(operand2 ex)))
-              ((eq? '< (operator ex)) (< (value (operand1 ex) e)(operand2 ex)))
-              ((eq? '<= (operator ex)) (<= (value (operand1 ex) e)(operand2 ex)))
-              ((eq? '>= (operator ex)) (>= (value (operand1 ex) e)(operand2 ex))))))))
+              ((eq? '== (operator ex)) (eq? (value (operand1 ex) e)(value (operand2 ex) e)))
+              ((eq? '!= (operator ex)) (not (eq? (predvalue (operand1 ex) e) (predvalue (operand2 ex) e))))
+              ((eq? '> (operator ex)) (> (value (operand1 ex) e)(value (operand2 ex) e)))
+              ((eq? '< (operator ex)) (< (value (operand1 ex) e)(value (operand2 ex) e)))
+              ((eq? '<= (operator ex)) (<= (value (operand1 ex) e) (value (operand2 ex) e)))
+              ((eq? '>= (operator ex)) (>= (value (operand1 ex) e)(value (operand2 ex) e))))))))
 (define bval
   (lambda (ex e)
     (cond
@@ -103,6 +103,6 @@
       ((not(bool? ex e)) (value ex e))
       (else (cond
               ((eq? '! (operator ex)) (not (value (operand1 ex) e)))
-              ((eq? '&& (operator ex)) ((lambda (a b) (and a b)) (bval (operand1 ex)e) (operand2 ex)))
-              ((eq? '|| (operator ex)) ((lambda (a b) (or a b)) (bval (operand1 ex) e)(operand2 ex))))))))
+              ((eq? '&& (operator ex)) ((lambda (a b) (and a b)) (bval (operand1 ex)e) (bval (operand2 ex)e)))
+              ((eq? '|| (operator ex)) ((lambda (a b) (or a b)) (bval (operand1 ex) e) (bval (operand2 ex)e))))))))
 ;END EVALUATOR FUNCTIONS=========================================
