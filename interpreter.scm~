@@ -1,4 +1,4 @@
-(load "loopSimpleParser.scm")
+(load "verySimpleParser.scm")
 (load "environment.scm")
 (load "Interpreter_value.scm")
 
@@ -50,7 +50,7 @@
 ; s is the statement, e is the environment
 ; returns a list which is (value environment)
 (define assign-stmt
-  (lambda (s e) 
+  (lambda (s e)
     (cond
       ((null?(lookup (operand1 s) e)) (error 'interpreter "Variable not declared"))
       ; Return the value consed onto a list containing the environment

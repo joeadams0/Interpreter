@@ -20,7 +20,7 @@
       ((number? ex) #t)
       ((not (pair? ex)) (or(number? (lookup ex e))(or (eq? (lookup ex e) #t)(eq? (lookup ex e) #f))))
       ((null? (cdr ex)) (math? (car ex) e))
-      ((not (= (length ex) 3))
+      ((not (= (length ex) 3)) 
        (cond
          ((and (math? (cons (car ex) (cons (car (cdr ex)) (cons(car (cdr (cdr ex))) '()))) e)
                (math? (cons (car(cdr(cdr ex))) (cdr (cdr(cdr ex)))) e)))
