@@ -18,10 +18,11 @@
     (cond
       ((null? ex) #f)
       ((or (boolean? ex) (number? ex)) #t)
-      ((not (pair? ex)) 
+      ((not (pair? ex))
        (cond
          ((number? (lookup ex e)) #t)
          ((boolean? (lookup ex e)) #t)
+         ((null? (lookup ex e)) (error 'value "Variable not delcared"))
          (else (error 'value "Variable declared but not assigned"))))
       ((null? (cdr ex)) (math? (car ex) e))
       ((= (length ex) 2)

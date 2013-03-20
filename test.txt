@@ -1,5 +1,14 @@
-var x;
-var y;
-var z;
-var w = (x = 6) + (y = z = 20);
-return w + x + y + z;
+var a = 14;
+var b = 3 * a - 7;
+if (a < b) {
+  var temp = a;
+  a = b;
+  b = temp;
+}
+var r = a % b;
+while (r != 0) {
+  a = b;
+  b = r;
+  r = a % b;
+}
+return b;
