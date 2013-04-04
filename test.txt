@@ -1,14 +1,11 @@
-var a = 14;
-var b = 3 * a - 7;
-if (a < b) {
-  var temp = a;
-  a = b;
-  b = temp;
+var x = 0;
+while (x < 10) {
+  var y = 0;
+  x = x + 1;
+  y = y - 1;
+  break;
 }
-var r = a % b;
-while (r != 0) {
-  a = b;
-  b = r;
-  r = a % b;
+if (x > 0) {
+  x = y;
 }
-return b;
+return x;

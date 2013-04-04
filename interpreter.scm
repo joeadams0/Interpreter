@@ -80,7 +80,7 @@
 ; Starts statement list on that block
 (define start-block
   (lambda (s e return break continue)
-    (stmt-list (cdr s) (push-layer e) return break (lambda (e2) (continue (pop-layer e2)))))) 
+    (stmt-list (cdr s) (push-layer e) return (lambda (e) (break (end-block e))) (lambda (e2) (continue (pop-layer e2)))))) 
 
 (define end-block
   (lambda (e)
