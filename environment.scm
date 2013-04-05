@@ -10,6 +10,10 @@
   (lambda (var value environment)
     (cons (cons (cons var (get-vars (peek-layer environment))) (cons (cons (box value) (get-vals (peek-layer environment))) '())) (pop-layer environment))))
 
+(define bind-pointer
+  (lambda (var value environment)
+    (cons (cons (cons var (get-vars (peek-layer environment))) (cons (cons value (get-vals (peek-layer environment))) '())) (pop-layer environment))))
+
 ; Updates the value of the binding
 ; Returns the value
 (define update-binding
@@ -53,6 +57,27 @@
       ((null? (car layer)) '())
       ((eq? var (first-var layer)) (first-value layer))
       (else (lookup-layer var (rest-layer layer))))))
+
+(define lookup-pointer
+  (lambda (var e)
+    (cond 
+      ((null? e) '())
+      ((exists-binding? var (peek-layer e)) (lookup-pointer-layer var (peek-layer e)))
+      (else (lookup-pointer var (pop-layer e))))))
+
+(define lookup-pointer-layer
+  (lambda (var layer)
+    (cond
+      ((null? (car layer)) '())
+      ((eq? var (first-var layer)) (first-pointer layer))
+      (else (lookup-pointer-layer var (rest-layer layer))))))
+
+(define first-pointer
+  (lambda (layer)
+    (cond 
+      ((null? (car layer)) '())
+      (else (car (car (cdr layer)))))))
+
 
 ; Returns first variable name in the layer
 (define first-var

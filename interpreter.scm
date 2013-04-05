@@ -1,12 +1,16 @@
-(load "loopSimpleParser.scm")
+(load "functionParser.scm")
 (load "environment.scm")
 (load "Interpreter_value.scm")
 
 ; Begins interpretation process
 (define interpret
   (lambda (filename)
-    (call/cc (lambda (return)
+    (letrec ((env (call/cc (lambda (return)
                (stmt-list (parser filename) (new-environment) return '() '())))))
+      (cond
+        ((not (null? (lookup 'main env)))
+         (func-call (cons 'funcall (cons 'main '())) env))
+        (else (display "Warning: No main method defined. Program has to entry point"))))))
 
 ; Interpretes the statement list
 ; p is a parsetree, e is the environment
@@ -29,6 +33,8 @@
       ((eq? (operator s) 'if) (if-stmt s e return break continue))
       ((eq? (operator s) 'begin) (start-block s e return break continue))
       ((eq? (operator s) 'continue) (continue e))
+      ((eq? (operator s) 'function) (function-declare s e))
+      ((eq? (car s) 'funcall) (func-call s e) e)
       (else ((stmt-f s) s e return)))))
 
 ; Interpretes the if statement
@@ -52,7 +58,31 @@
                                                                                 (loop cond body e2))))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
+
+
+(define function-declare
+  (lambda (s e)
+    (cond
+      ((not (null? (lookup (car (cdr s)) e))) (error 'function-declare "Function name already in use"))
+      (else (bind (car (cdr s)) (cdr (cdr s)) e)))))
+               
+
+(define func-call
+  (lambda (s e)
+    (cond
+      ((null? (lookup (operand1 s) e)) (error 'func-call "Function not declared before use"))
+      (else (call/cc (lambda (return)
+                       (stmt-list (car (cdr (lookup (operand1 s) e))) (func-params (car (lookup (operand1 s) e)) (cdr (cdr s)) (push-layer e)) return '() '()))))))) 
+
       
+(define func-params 
+  (lambda (vars params e)
+    (cond
+      ((and (null? vars) (null? params)) e)
+      ((or (null? vars) (null? params)) (error 'func-params "Function input does not match parameters required"))
+      ((eq? (car vars) '&) (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-pointer (car params) e) e)))
+      (else (func-params (cdr vars) (cdr params) (bind (car vars) (value (car params) e) e))))))
+
                               
 ; Interpretes the define a variable statement
 ; s is the statement, e is the environment
