@@ -1,11 +1,15 @@
-swap(&x, &y) {  
+var x = 5;
+var y = 2;
+
+thing(x, y) {   
   var temp = x;
   x = y;
   y = temp;
+
+  return y;
 }
-main(){
-	var a = 10;
-	var b = 5;
-	swap(a,b);
-	return a;
+
+main () {
+   y = thing(x, y);
+   return y;
 }
