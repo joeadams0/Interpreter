@@ -1,11 +1,19 @@
-swap(&x, &y) {  
-  var temp = x;
-  x = y;
-  y = temp;
+var x = 14;
+var y = 3 * x - 7;
+gcd(a,b) {
+  if (a < b) {
+    var temp = a;
+    a = b;
+    b = temp;
+  }
+  var r = a % b;
+  while (r != 0) {
+    a = b;
+    b = r;
+    r = a % b;
+  }
+  return b;
 }
-main(){
-	var a = 10;
-	var b = 5;
-	swap(a,b);
-	return a;
+main () {
+  return gcd(x,y);
 }

@@ -9,7 +9,7 @@
                (stmt-list (parser filename) (new-environment) return '() '())))))
       (cond
         ((not (null? (lookup 'main env)))
-         (func-call (cons 'funcall (cons 'main '())) env))
+         (display-filter (func-call (cons 'funcall (cons 'main '())) env)))
         (else (display "Warning: No main method defined. Program has to entry point"))))))
 
 ; Interpretes the statement list
@@ -189,4 +189,14 @@
     (cond
       ((null? s) '())
       (else (car s)))))
+
+(define display-filter
+  (lambda (in)
+    (cond
+      ((boolean? in)
+       (if in
+           'true
+           'false))
+      ((list? in) (error 'display-filter "Something is wrong here... trying to return list."))
+      (else in))))
 

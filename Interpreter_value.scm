@@ -8,6 +8,7 @@
       ((not (list? ex)) 
        (cond 
          ((or (boolean? ex) (number? ex)) ex)
+         ((null? (lookup ex e)) (error 'value "Variable does not exist in scope"))
          (else (lookup ex e))))
       (else ((value-f ex e) ex e)))))
 
