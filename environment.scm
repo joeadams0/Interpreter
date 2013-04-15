@@ -57,7 +57,15 @@
 ; No environment
 (define set-instance-variable 
   (lambda (var-name class)
-    1))
+    (cons
+     (car class)
+     (cons
+      (cadr class)
+      (cons
+       (caddr class)
+       (enlist (cons var-name (cadddr class))))))))
+      
+     
 
 ; Adds a method to the class
 ; (bind-method 'poop (poop-closure) '(()(()())()())) -> (()((poop)(poop-closure))()())
