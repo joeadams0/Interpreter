@@ -44,8 +44,12 @@
 ; Returns the new class
 ; Box the values of the variables before adding them to the list ((box 10) -> #&10)
 (define bind-static-var
-  (lambda (var-name value class)
-    1))
+  (λ (var-name value class)
+    (cons 
+     (cons
+      (cons var-name (caar class))
+      (enlist (cons (box value) (car (cdr (car class))))))
+     (cdr class))))
 
 ; Adds a variable name to the instance-variable list
 ; (set-instance-variable 'poop '((()())()()())) -> ((()())()()(poop))
