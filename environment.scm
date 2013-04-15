@@ -15,7 +15,7 @@
   (lambda ()
     '(
       (()())
-      ()
+      (()())
       ()
       ()  )))
 
@@ -57,23 +57,29 @@
 ; No environment
 (define set-instance-variable 
   (lambda (var-name class)
-    (cons
+    (cons    ; put the first part of the class onto the newly re-created rest of it
      (car class)
-     (cons
+     (cons  ; put the second part of the class onto the newly re-created rest of it
       (cadr class)
-      (cons
-       (caddr class)
-       (enlist (cons var-name (cadddr class))))))))
+      (cons  ; put the third part of the class onto the newly edited last part of the class
+       (caddr class)  ; the 3rd part
+       (enlist (cons var-name (cadddr class)))))))) ; add the variable to the 4th part of class
       
      
 
 ; Adds a method to the class
-; (bind-method 'poop (poop-closure) '(()(()())()())) -> (()((poop)(poop-closure))()())
+; (bind-method 'poop (poop-closure) '(()  (()())  ()())) -> (()  ((poop)(poop-closure))  ()())
 ; Return class
 ; Dont use boxes
 (define bind-method
   (lambda (method-name closure class)
-    1))
+    (cons 
+     (car class)
+     (cons
+      (cons
+       (cons method-name (caadr class))
+       (enlist(cons closure (cadadr class))))
+      (cddr class)))))
 
 ; Looks up a variable in a class
 ; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
