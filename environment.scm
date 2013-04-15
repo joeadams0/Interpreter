@@ -4,11 +4,23 @@
   (lambda ()
     (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t (push-layer '())))))))
 
+; Adds a new class to the main environment
+; Takes:
+;    class-name:    the new class's name
+;    class-body:    the closure of the class being added
+;    e:             the environment to which this class is being added.
+; Returns the new environment
+;(define bind-class
+;  (λ (class-name class-body e)
+;    (
+
 ; Bind the variable to the value in the environment
 ; Returns the new environment
 (define bind
   (lambda (var value environment)
-    (cons (cons (cons var (get-vars (peek-layer environment))) (cons (cons (box value) (get-vals (peek-layer environment))) '())) (pop-layer environment))))
+    (cons (cons (cons var (get-vars (peek-layer environment))) 
+                (cons (cons (box value) (get-vals (peek-layer environment))) '())) 
+          (pop-layer environment))))
 
 (define bind-pointer
   (lambda (var value environment)
