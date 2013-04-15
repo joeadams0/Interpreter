@@ -102,7 +102,12 @@
 
 (define bind-pointer
   (lambda (var value environment)
-    (cons (cons (cons var (get-vars (peek-layer environment))) (cons (cons value (get-vals (peek-layer environment))) '())) (pop-layer environment))))
+    (cons (cons 
+           (cons var (get-vars (peek-layer environment))) 
+           (cons 
+            (cons value (get-vals (peek-layer environment))) 
+            '())  )
+          (pop-layer environment))))
 
 ; Updates the value of the binding
 ; Returns the value
