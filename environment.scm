@@ -27,7 +27,17 @@
 ; Dont use boxes
 (define set-parent
   (lambda (parent class)
-    1))
+    (cons 
+     (car class) 
+     (cons 
+      (caar class) 
+      (cons (enlist parent) (cdddr class))))))
+
+; enlist takes an item and wraps it in parenthases,
+; essentially returning the list containing the itme
+(define enlist
+  (λ (item)
+    (cons item '())))
 
 ; Binds a variable to the static variables list in the class
 ; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
