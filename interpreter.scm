@@ -1,16 +1,19 @@
-(load "functionParser.scm")
+(load "classParser.scm")
 (load "environment.scm")
 (load "Interpreter_value.scm")
 
 ; Begins interpretation process
 (define interpret
-  (lambda (filename)
-    (letrec ((env (call/cc (lambda (return)
-               (stmt-list (parser filename) (new-environment) return '() '())))))
-      (cond
-        ((not (null? (lookup 'main env)))
-         (display-filter (func-call (cons 'funcall (cons 'main '())) env)))
-        (else (display "Warning: No main method defined. Program has to entry point"))))))
+  (lambda (filename class-name)
+    (func-call 'main '() class-name '() (class-list (parser filename) (new-environment)))))
+
+; Parses the class list
+; Returns an environment with all of th classes in it
+(define class-list
+  (lambda (l e)
+    (cond
+      ((null? l) e)
+      (else (class-list (cdr l) (class-declare (car l) e))))))
 
 ; Interpretes the statement list
 ; p is a parsetree, e is the environment
@@ -21,6 +24,55 @@
       ((null? p) (end-block e))
       (else (stmt-list (cdr p) (stmt (car p) e return break continue) return break continue)))))
 
+; Declares a new class
+; Returns an environment
+(define class-declare
+  (lambda (class e)
+    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (car (cdr (cdr class))) (new-class))) e)))
+
+; Parses the class fields
+; Returns a class
+(define add-fields
+  (lambda (l class)
+    (cond
+      ((null? l) class)
+      (else (parse-fields (cdr l) (new-field (car l) class))))))
+
+; Adds a new field to class
+; Returns the class
+(define new-field
+  (lambda (field class)
+    (cond
+      ((eq? (operator field) 'static-var) (static-var-dec field class))
+      ((eq? (operator field) 'static-function) (func-dec field class))
+      ((eq? (operator field) 'var) (instance-var-dec field class))
+      ((eq? (operator field) 'function) (func-dec field class)))))
+
+; Adds a static var
+; returns the class
+(define static-var-dec 
+  (lambda (field class)
+    (cond
+      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      ((= (length field) 2) (bind-static-var (car (cdr field)) '(1) class))
+      (else (bind-static-var (car (cdr field)) (value (car (cdr (cdr field))) class) class)))))
+
+; Adds an instance variable
+; Returns the class
+(define instance-var-dec
+  (lambda (field class)
+    (cond
+      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      (else (bind-instance-var (car (cdr field)) class)))))
+
+; (params, body, class function)
+; Returns environemnt
+(define func-dec
+  (lambda (field class)
+    (cond
+      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      ((bind-method (car (cdr field)) (cons (car (cdr (cdr field))) (cons (car (cdr (cdr (cdr field)))) (lambda (e) (lookup-class (car (cdr (field))) e)))) class)))))  
+    
 ; Interpretes a statement
 ; s is the statement, e is the environment
 ; returns an environment
@@ -58,19 +110,12 @@
                                                                                 (loop cond body e2))))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
-
-
-(define function-declare
-  (lambda (s e)
-    (cond
-      ((not (null? (lookup (car (cdr s)) e))) (error 'function-declare "Function name already in use"))
-      (else (bind (car (cdr s)) (cdr (cdr s)) e)))))
                
 
 (define func-call
-  (lambda (s e)
+  (lambda (f-name params class-name instance e)
     (cond
-      ((null? (lookup (operand1 s) e)) (error 'func-call "Function not declared before use"))
+      ((null? (lookup (f-name s) e)) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
                        (stmt-list (car (cdr (lookup (operand1 s) e))) (func-params (car (lookup (operand1 s) e)) (cdr (cdr s)) (push-layer e)) return '() '()))))))) 
 

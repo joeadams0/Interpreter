@@ -1,8 +1,66 @@
 ; The environment for the interpreter
-; Return a new environment with true and false defined
+; Return a new environment
 (define new-environment
   (lambda ()
-    (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t (push-layer '())))))))
+    '(()())))
+;(define new-environment
+;  (lambda ()
+;    (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t (push-layer '())))))))
+
+
+ 
+(define new-class
+  (lambda ()
+    '((()())()()())))
+
+; DANIEL
+; Class structure -> (((static var names) (static var values)) ((method names)(method closures)) (parent) (instance variable names))
+; Sets the parent of the class
+; (set-parent 'parent (()()()())) -> (()()(parent)())
+; Returns the new class
+; Dont use boxes
+(define set-parent
+  (lambda (parent class)
+    1))
+
+; Binds a variable to the static variables list in the class
+; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
+; Returns the new class
+; Box the values of the variables before adding them to the list ((box 10) -> #&10)
+(define bind-static-var
+  (lambda (var-name value class)
+    1))
+
+; Adds a variable name to the instance-variable list
+; (set-instance-variable 'poop '((()())()()())) -> ((()())()()(poop))
+; Return new class
+; No environment
+(define set-instance-variable 
+  (lambda (var-name class)
+    1))
+
+; Adds a method to the class
+; (bind-method 'poop (poop-closure) '(()(()())()())) -> (()((poop)(poop-closure))()())
+; Return class
+; Dont use boxes
+(define bind-method
+  (lambda (method-name closure class)
+    1))
+
+; Looks up a variable in a class
+; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
+; Returns the UNBOXED value of the variable
+; Ignore instance for now
+(define lookup-var
+  (lambda (var class instance)
+    1))
+
+; Looks up a method closure in a class
+; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
+; Returns the closure
+(define lookup-method
+  (lambda (var class)
+    1))
 
 ; Bind the variable to the value in the environment
 ; Returns the new environment
