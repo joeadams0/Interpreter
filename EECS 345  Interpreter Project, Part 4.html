@@ -1,0 +1,126 @@
+
+<!-- saved from url=(0109)https://blackboard.case.edu/bbcswebdav/pid-914164-dt-content-rid-1840333_1/courses/eecs345_hsc21_1/part4.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>EECS 345: Interpreter Project, Part 4</title>
+</head>
+
+<body>
+<h2>EECS 345: Programming Language Concepts</h2>
+<h2>Interpreter Project, Part 4</h2>
+<h3>Due Wednesday, April 17</h3>
+
+<p><em>For this and all Interpreter Project's, you are strongly encouraged, but not required, to work in a team of two.  
+You will be building off of the interpreter you wrote for part 1.  As a result, it is expected that you keep the same teams
+that you used for part 3.  If you need to change your team, please speak to the course instructor.</em></p>
+
+<p>In this homework, you will expand on the interpreter of part 3 adding class definitions. <em>Note that we will not be adding
+objects in this part of the interpreter.</em>
+We still assume all variables store integers (for the individuals working solo) and integers and boolean (for those
+working in teams).  Likewise, all functions will only return integers (for the individuals working solo) and integers
+and boolean (for those working in teams).  For teams, we will also still allow functions to be both call-by-value
+and call-by-reference.</p>
+
+<p>Here is an example of a program of two classes, using only static fields and methods:
+</p><pre>class Rectangle {
+  static var width = 10;
+  static var height = 12;
+
+  static area() {
+    var a = width * height;
+    return a;
+  }
+
+  static setSize(x, y) {
+    width = x;
+    height = y;
+  }
+}
+
+class Square extends Rectangle {
+  static setSize(x) {
+    super.setSize(x, x);
+  }
+
+  static main() {
+    setSize(20);
+    return area();
+  }
+}
+</pre>
+
+Your interpreter should now take two parameters, a <em>file</em> and a <em>classname</em>.  For example,
+<tt>(interpret "MyProgram.j" "Square")</tt>, where <em>file</em> is the name of the file to be interpreted, and <em>classname</em>
+is the name of the class whose main method you are to run.  The function should call <tt>parser</tt> on the file
+<em>file</em>, and then lookup <tt>(string-&gt;symbol <em>classname</em>)</tt> in the environment to get the desired
+class, and then lookup the <tt>main</tt> method of this class.
+The final value returned by your interpreter should be whatever is returned by <tt>main</tt>.<p></p>
+
+<h4>For Teams</h4>
+
+<p>For those working in a team, you must also allow for method/function overloading.  Since we are only checking types dynamically,
+an overloaded function must have a different number of parameters.</p>
+
+<h4>Details</h4>
+
+<p>
+</p><li>Variables and methods can now be static (class) or non-static (instance).</li>
+<li>The <tt>main</tt> method should be static.</li>
+<li>The language supports use of <tt>super</tt>.</li>
+<li>The top level of the program is only class definitions.</li>
+<li>Each class definition consists of variable declarations and function definitions (just like the top level of part 3 of the interpreter).</li>
+<li>Although it will not be useful until the next part of the interpreter, not that nested uses of the <tt>dot</tt> operator will be allowed.</li>
+
+
+<h4>Parser Constructs</h4>
+
+<pre>class A {              =&gt;   (class A () <em>body</em>)
+  <em>body</em>
+
+class B extends A {    =&gt;   (class B (extends A)  <em>body</em>)
+  <em>body</em>
+
+static var x = 5;      =&gt;   (static-var x 5)
+
+static main() {        =&gt;   (static-function main () <em>body</em>)
+  <em>body</em>
+
+A.x                    =&gt;   (dot A x)
+
+A.f(3,5)               =&gt;   (funcall (dot A f) 3 5)
+
+</pre>
+
+<h4>Basic Task</h4>
+<p>Write an interpreter that correctly handles classes, static variables, and static methods.
+You should be able to set value for variables, call methods, and use <tt>super</tt>.  </p>
+
+<p>Recall the suggested order from lecture to attack the problem.
+</p><ol>
+<li>Create helper functions to create a new class and instance (will be needed for part 5) and to access the portions of a class and instance.</li>
+<li>Everywhere when interpreting statements and expressions that an environment is passed as a parameter, you also have
+to pass parameters for class and instance.</li>
+<li>Change the top level interpreter code that you used in part 3 to return a class instead of returning an environment.</li>
+<li>Change the top level interpreter code that you wrote for part 3 to expect static and non-static declarations for variables and functions.</li>
+<li>Create a new top level for the interpreter that reads
+a list of class definitions, and stores each class with its definition in the environment.</li>
+<li>Create a function that takes a variable, a class, and an instance, and checks if the variable is in the list of
+class or instance variables and returns its value.</li>
+<li>Create a function that takes a variable, and environment, a class, and an instance, if the variable is in the environment,
+look it up, otherwise look in the class and instance variables. </li>
+<li>Create a function that takes the left hand side of a dot expression and returns a (class, instance) pair representing
+the class and instance of the left hand side.</li>
+<li>Create a function that takes a dot expression, calls the above function to evaluate the left hand side, and looks up the
+right hand side in the class/instance variables.</li>
+<li>Update your code that interprets a function definition to add a new function to the closure that looks up the function's class
+in the environment.</li>
+<li>Update the code that evaluates a function call to deal with objects and classes.</li>
+<li>Update the code that interprets an assignment statement so that it looks for the variable in the environment, class and instance variables</li>
+<li>Create a new <tt>interpret</tt> function.</li>
+</ol><p></p>
+
+
+
+
+
+
+</body></html>
