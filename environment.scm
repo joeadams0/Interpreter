@@ -2,7 +2,9 @@
 ; Return a new environment
 (define new-environment
   (lambda ()
-    '(()())))
+    '(
+      ()
+      ()   )))
 ;(define new-environment
 ;  (lambda ()
 ;    (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t (push-layer '())))))))
@@ -11,7 +13,11 @@
  
 (define new-class
   (lambda ()
-    '((()())()()())))
+    '(
+      (()())
+      ()
+      ()
+      ()  )))
 
 ; DANIEL
 ; Class structure -> (((static var names) (static var values)) ((method names)(method closures)) (parent) (instance variable names))
