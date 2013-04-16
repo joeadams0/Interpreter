@@ -1,3 +1,9 @@
+; testing shit
+(define cclass
+    '(((a b p poop)(#&1 #&2 #&3 #&4))
+      ((m1 m2 m3)
+       ((m1 shit to do)(m2 shit to do)(m3 shit to do)))()()))
+
 ; The environment for the interpreter
 ; Return a new environment
 (define new-environment
@@ -120,16 +126,47 @@
 (define rest-of-varvals-in-class
   (λ (class)
     (cdr (varvals-list-in-class class))))
+
+; Methodname accessor functions
+(define methodnames-list-in-class
+  (λ (class)
+    (caadr class)))
+(define first-methodname-in-class
+  (λ (class)
+    (car (methodnames-list-in-class class))))
+(define rest-of-methodnames-in-class
+  (λ (class)
+    (cdr (methodnames-list-in-class class))))
+
+; method-closure accessor functions
+(define methodvals-list-in-class
+  (λ (class)
+    (cadadr class)))
+(define first-methodval-in-class
+  (λ (class)
+    (car (methodvals-list-in-class class))))
+(define rest-of-methodvals-in-class
+  (λ (class)
+    (cdr (methodvals-list-in-class class))))
 ; ------------------------------------------------------------------------------
-                             
+
       
 
 ; Looks up a method closure in a class
 ; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
 ; Returns the closure
 (define lookup-method
-  (lambda (var class)
-    1))
+  (lambda (method class)
+    (cond
+      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
+      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
+      (else (lookup-method method 
+                           (cons
+                            (car class)
+                            (cons
+                             (cons (rest-of-methodnames-in-class class)
+                                   (enlist (rest-of-methodvals-in-class class)))
+                             (cddr class))))))))
 
 
 ; Bind the variable to the value in the environment
