@@ -87,7 +87,42 @@
 ; Ignore instance for now
 (define lookup-var
   (lambda (var class instance)
-    1))
+    (cond
+      ((null? (varnames-list-in-class class)) (error 'lookup-var "Variable not declared"))
+      ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
+      (else (lookup-var var 
+                        (cons
+                          (cons (rest-of-varnames-in-class class)
+                                (enlist (rest-of-varvals-in-class class)))
+                          (cdr class))   
+                        instance)))))
+
+; ------------------------------------------------------------------------------
+; Abstracted class accessor functions
+; varname accessor functions
+(define varnames-list-in-class
+  (λ (class)
+    (caar class)))
+(define first-varname-in-class
+  (λ (class)
+    (car (varnames-list-in-class class))))
+(define rest-of-varnames-in-class
+  (λ (class)
+    (cdr (varnames-list-in-class class))))
+
+; varval accessor functions
+(define varvals-list-in-class
+  (λ (class)
+    (cadar class)))
+(define first-varval-in-class
+  (λ (class)
+    (car (varvals-list-in-class class))))
+(define rest-of-varvals-in-class
+  (λ (class)
+    (cdr (varvals-list-in-class class))))
+; ------------------------------------------------------------------------------
+                             
+      
 
 ; Looks up a method closure in a class
 ; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
@@ -96,15 +131,6 @@
   (lambda (var class)
     1))
 
-; Adds a new class to the main environment
-; Takes:
-;    class-name:    the new class's name
-;    class-body:    the closure of the class being added
-;    e:             the environment to which this class is being added.
-; Returns the new environment
-;(define bind-class
-;  (λ (class-name class-body e)
-;    (
 
 ; Bind the variable to the value in the environment
 ; Returns the new environment
