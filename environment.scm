@@ -110,7 +110,7 @@
 (define lookup-method
   (lambda (method class)
     (cond
-      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
+      ((null? (methodnames-list-in-class class)) '())
       ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
       (else (lookup-method method 
                            (cons
@@ -150,7 +150,7 @@
 (define lookup-var
   (lambda (var class instance)
     (cond
-      ((null? (varnames-list-in-class class))(error 'lookup-var "var not declared"))
+      ((null? (varnames-list-in-class class))'())
       ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
       (else (lookup-var var 
                         (cons

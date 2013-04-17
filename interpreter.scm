@@ -52,6 +52,8 @@
 ; returns the class
 (define static-var-dec  
   (lambda (field class)
+    (display class)
+    (newline)
     (cond
       ((not (null? (lookup-var (car (cdr field)) class '()))) (error 'static-var-dec "Variable already exists"))
       ((= (length field) 2) (bind-static-var (car (cdr field)) '(1) class))
