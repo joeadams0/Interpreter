@@ -2,7 +2,7 @@
 (define cclass
     '(((a b p poop)(#&1 #&2 #&3 #&4))
       ((m1 m2 m3)
-       ((m1 shit to do)(m2 shit to do)(m3 shit to do)))()()))
+       ((m1 shit to do)(m2 shit to do)(m3 shit to do)))(pareniento)()))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -26,7 +26,7 @@
       ()  )))
 
 ; DANIEL
-; Class structure -> (((static var names) (static var values)) ((method names)(method closures)) (parent) (instance variable names))
+; Class structure -> ( ((static var names)(static var values))  ((method names)(method closures))  (parent)  (instance variable names))
 ; Sets the parent of the class
 ; (set-parent 'parent (()()()())) -> (()()(parent)())
 ; Returns the new class
@@ -112,7 +112,9 @@
 ; Returns the name of the parent class if there is one.
 (define lookup-parent
   (lambda (class instance)
-    1))
+    (cond
+      ((null? (parent-of class))'())
+      (else (car (parent-of class))))))
 
 ; Looks up the class in the environment
 ; (lookup-class 'poop '((poop) (poop-class))) -> poop-class
@@ -128,7 +130,7 @@
 (define lookup-var
   (lambda (var class instance)
     (cond
-      ((null? (varnames-list-in-class class))'())
+      ((null? (varnames-list-in-class class))(error 'lookup-var "var not declared"))
       ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
       (else (lookup-var var 
                         (cons
@@ -140,6 +142,20 @@
 
 ; ------------------------------------------------------------------------------
 ; Abstracted class accessor functions
+; Basic component gettors
+(define variables-in-class
+  (λ (class)
+    (car class)))
+(define methods-in-class
+  (λ (class)
+    (cadr class)))
+(define parent-of
+  (λ (class)
+    (caddr class)))
+(define instance-vars-in-class
+  (λ (class)
+    (cadddr class)))
+
 ; varname accessor functions
 (define varnames-list-in-class
   (λ (class)
