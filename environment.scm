@@ -87,13 +87,24 @@
        (enlist(cons closure (cadadr class))))
       (cddr class)))))
 
-; Looks up a method in a class
-; (lookup-method 'poop ((()())((poop)(poop-closure))()()) '()) -> poop-closure
-; Return closure
-; No boxes
+; ------------------------------------------------------------------------------
+; LOOKUP-XXX FUNCTIONS
+
+; Looks up a method closure in a class
+; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
+; Returns the closure
 (define lookup-method
-  (lambda (method-name class instance)
-    1))
+  (lambda (method class)
+    (cond
+      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
+      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
+      (else (lookup-method method 
+                           (cons
+                            (car class)
+                            (cons
+                             (cons (rest-of-methodnames-in-class class)
+                                   (enlist (rest-of-methodvals-in-class class)))
+                             (cddr class))))))))
 
 ; Looks up the parent for the class
 ; (lookup-parent '((()()) (()()) (poop) ()) '()) -> poop
@@ -125,6 +136,7 @@
                                 (enlist (rest-of-varvals-in-class class)))
                           (cdr class))   
                         instance)))))
+; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
 ; Abstracted class accessor functions
@@ -172,24 +184,6 @@
   (λ (class)
     (cdr (methodvals-list-in-class class))))
 ; ------------------------------------------------------------------------------
-
-      
-
-; Looks up a method closure in a class
-; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
-; Returns the closure
-(define lookup-method
-  (lambda (method class)
-    (cond
-      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
-      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
-      (else (lookup-method method 
-                           (cons
-                            (car class)
-                            (cons
-                             (cons (rest-of-methodnames-in-class class)
-                                   (enlist (rest-of-methodvals-in-class class)))
-                             (cddr class))))))))
 
 
 ; Bind the variable to the value in the environment
