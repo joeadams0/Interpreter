@@ -1,13 +1,8 @@
 class Rectangle {
   static var width = 10;
   static var height = 12;
-  static var x;
-  static var y = 10+ 2;
-  var z = 5;
 
-	poop(){}
-  static area() {
-	a.b.c.height = 5;
+  static area(a, b) {
 	height = 5;
     var a = width * height;
     return a;

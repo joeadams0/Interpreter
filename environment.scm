@@ -6,6 +6,7 @@
 
 ; The environment for the interpreter
 ; Return a new environment
+; ((classes-name class1) ((classes) (class2)))
 (define new-environment
   (lambda ()
     '(
@@ -181,7 +182,7 @@
 (define lookup-method
   (lambda (method class)
     (cond
-      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
+      ((null? (methodnames-list-in-class class)) '())
       ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
       (else (lookup-method method 
                            (cons

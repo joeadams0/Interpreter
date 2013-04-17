@@ -5,7 +5,7 @@
 ; Begins interpretation process
 (define interpret
   (lambda (filename class-name)
-    (func-call 'main '() class-name '() (class-list (parser filename) (new-environment)))))
+    (class-list (parser filename) (new-environment))))
 
 ; Parses the class list
 ; Returns an environment with all of th classes in it
@@ -19,7 +19,7 @@
 ; p is a parsetree, e is the environment
 ; returns an environment
 (define stmt-list
-  (lambda (p e return break continue)
+  (lambda (p e return break continue class instance)
     (cond
       ((null? p) (end-block e))
       (else (stmt-list (cdr p) (stmt (car p) e return break continue) return break continue)))))
@@ -36,7 +36,7 @@
   (lambda (l class)
     (cond
       ((null? l) class)
-      (else (parse-fields (cdr l) (new-field (car l) class))))))
+      (else (add-fields (cdr l) (new-field (car l) class))))))
 
 ; Adds a new field to class
 ; Returns the class
@@ -44,7 +44,7 @@
   (lambda (field class)
     (cond
       ((eq? (operator field) 'static-var) (static-var-dec field class))
-      ((eq? (operator field) 'static-function) (func-dec field class))
+      ((eq? (operator field) 'static-function) (method-dec field class))
       ((eq? (operator field) 'var) (instance-var-dec field class))
       ((eq? (operator field) 'function) (method-dec field class)))))
 
@@ -70,7 +70,7 @@
 (define method-dec
   (lambda (field class)
     (cond
-      ((not (null? (lookup-method (car (cdr field)) class '()))) (error 'func-declare "M already exists"))
+      ((not (null? (lookup-method (car (cdr field)) class ))) (error 'func-declare "M already exists"))
       ((bind-method (car (cdr field)) (cons (car (cdr (cdr field))) (cons (car (cdr (cdr (cdr field)))) (lambda (e) (lookup-class (car (cdr (field))) e)))) class)))))  
     
 ; Interpretes a statement
@@ -113,13 +113,21 @@
                
 
 (define func-call
-  (lambda (f-name params class-name instance e)
+  (lambda (f-name params class instance e)
     (cond
-      ((null? (lookup (f-name s) e)) (error 'func-call "Function not declared before use"))
+      ((null? (lookup-method f-name  class)) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
-                       (stmt-list (car (cdr (lookup (operand1 s) e))) (func-params (car (lookup (operand1 s) e)) (cdr (cdr s)) (push-layer e)) return '() '()))))))) 
+                       (stmt-list (get-method-body f-name class) (func-params (get-method-params f-name class) params (push-layer e)) return '() '() class instance))))))) 
 
-      
+
+(define get-method-body
+  (lambda (m-name class)
+    (car (cdr (lookup-method m-name class)))))
+
+(define get-method-params
+  (lambda (m-name class)
+    (car (lookup-method m-name class))))
+
 (define func-params 
   (lambda (vars params e)
     (cond
