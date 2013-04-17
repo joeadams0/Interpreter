@@ -46,14 +46,14 @@
       ((eq? (operator field) 'static-var) (static-var-dec field class))
       ((eq? (operator field) 'static-function) (func-dec field class))
       ((eq? (operator field) 'var) (instance-var-dec field class))
-      ((eq? (operator field) 'function) (func-dec field class)))))
+      ((eq? (operator field) 'function) (method-dec field class)))))
 
 ; Adds a static var
 ; returns the class
-(define static-var-dec 
+(define static-var-dec  
   (lambda (field class)
     (cond
-      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      ((not (null? (lookup-var (car (cdr field)) class '()))) (error 'static-var-dec "Variable already exists"))
       ((= (length field) 2) (bind-static-var (car (cdr field)) '(1) class))
       (else (bind-static-var (car (cdr field)) (value (car (cdr (cdr field))) class) class)))))
 
@@ -62,15 +62,15 @@
 (define instance-var-dec
   (lambda (field class)
     (cond
-      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      ((not (null? (lookup-var (car (cdr field)) class '()))) (error 'static-var-dec "Variable already exists"))
       (else (bind-instance-var (car (cdr field)) class)))))
 
 ; (params, body, class function)
 ; Returns environemnt
-(define func-dec
+(define method-dec
   (lambda (field class)
     (cond
-      ((not (null? (lookup-var (car (cdr field)) (get-name class) '()))) (error 'static-var-dec "Variable already exists"))
+      ((not (null? (lookup-method (car (cdr field)) class '()))) (error 'func-declare "M already exists"))
       ((bind-method (car (cdr field)) (cons (car (cdr (cdr field))) (cons (car (cdr (cdr (cdr field)))) (lambda (e) (lookup-class (car (cdr (field))) e)))) class)))))  
     
 ; Interpretes a statement

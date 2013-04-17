@@ -87,6 +87,29 @@
        (enlist(cons closure (cadadr class))))
       (cddr class)))))
 
+; Looks up a method in a class
+; (lookup-method 'poop ((()())((poop)(poop-closure))()()) '()) -> poop-closure
+; Return closure
+; No boxes
+(define lookup-method
+  (lambda (method-name class instance)
+    1))
+
+; Looks up the parent for the class
+; (lookup-parent '((()()) (()()) (poop) ()) '()) -> poop
+; (lookup-parent '((()()) (()()) () ()) '()) -> '() (if no parent return '())
+; Returns the name of the parent class if there is one.
+(define lookup-parent
+  (lambda (class instance)
+    1))
+
+; Looks up the class in the environment
+; (lookup-class 'poop '((poop) (poop-class))) -> poop-class
+; if no class return '()
+(define lookup-class
+  (lambda (class env)
+    1))
+
 ; Looks up a variable in a class
 ; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
 ; Returns the UNBOXED value of the variable
@@ -94,7 +117,7 @@
 (define lookup-var
   (lambda (var class instance)
     (cond
-      ((null? (varnames-list-in-class class)) (error 'lookup-var "Variable not declared"))
+      ((null? (varnames-list-in-class class))'())
       ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
       (else (lookup-var var 
                         (cons
