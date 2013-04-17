@@ -3,6 +3,9 @@
     '(((a b p poop)(#&1 #&2 #&3 #&4))
       ((m1 m2 m3)
        ((m1 shit to do)(m2 shit to do)(m3 shit to do)))(pareniento)()))
+(define eenv
+  '((poop c1 c2 c3)
+    (poop-body c1-body c2-body c3-body)))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -87,6 +90,13 @@
        (enlist(cons closure (cadadr class))))
       (cddr class)))))
 
+; Binds the class to the environment
+; (bind-class 'poop (poop-class) (()()) -> ((poop)((poop-class)))
+; Returns the environment
+(define bind-class
+(lambda (class-name class env)
+1))
+
 ; ------------------------------------------------------------------------------
 ; LOOKUP-XXX FUNCTIONS
 
@@ -100,7 +110,7 @@
       ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
       (else (lookup-method method 
                            (cons
-                            (car class)
+                            (variables-in-class class)
                             (cons
                              (cons (rest-of-methodnames-in-class class)
                                    (enlist (rest-of-methodvals-in-class class)))
@@ -110,6 +120,7 @@
 ; (lookup-parent '((()()) (()()) (poop) ()) '()) -> poop
 ; (lookup-parent '((()()) (()()) () ()) '()) -> '() (if no parent return '())
 ; Returns the name of the parent class if there is one.
+; currently does nothing with the instance
 (define lookup-parent
   (lambda (class instance)
     (cond
@@ -121,7 +132,12 @@
 ; if no class return '()
 (define lookup-class
   (lambda (class env)
-    1))
+    (cond
+      ((null? (class-name-list env))'())
+      ((eq? (car (class-name-list env)) class) (car (class-body-list env)))
+      (else (lookup-class class
+                          (cons (cdr (class-name-list env))
+                                (list (cdr (class-body-list env)))))))))
 
 ; Looks up a variable in a class
 ; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
@@ -142,7 +158,15 @@
 
 ; ------------------------------------------------------------------------------
 ; Abstracted class accessor functions
-; Basic component gettors
+; Basic environment component gettors
+(define class-name-list
+  (λ (env)
+    (car env)))
+(define class-body-list
+  (λ (env)
+    (cadr env)))
+
+; Basic class component gettors
 (define variables-in-class
   (λ (class)
     (car class)))
