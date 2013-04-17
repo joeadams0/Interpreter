@@ -38,9 +38,9 @@
 (define set-parent
   (lambda (parent class)
     (cons 
-     (car class) 
+     (variables-in-class class)
      (cons 
-      (caar class) 
+      (methods-in-class class) 
       (cons (enlist parent) (cdddr class))))))
 
 ; enlist takes an item and wraps it in parenthases,
