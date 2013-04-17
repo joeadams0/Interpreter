@@ -2,7 +2,10 @@
 (define cclass
     '(((a b p poop)(#&1 #&2 #&3 #&4))
       ((m1 m2 m3)
-       ((m1 shit to do)(m2 shit to do)(m3 shit to do)))()()))
+       ((m1 shit to do)(m2 shit to do)(m3 shit to do)))(pareniento)()))
+(define eenv
+  '((poop c1 c2 c3)
+    ((poop-body) (c1-body) (c2-body) (c3-body))))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -27,7 +30,7 @@
       ()  )))
 
 ; DANIEL
-; Class structure -> (((static var names) (static var values)) ((method names)(method closures)) (parent) (instance variable names))
+; Class structure -> ( ((static var names)(static var values))  ((method names)(method closures))  (parent)  (instance variable names))
 ; Sets the parent of the class
 ; (set-parent 'parent (()()()())) -> (()()(parent)())
 ; Returns the new class
@@ -46,18 +49,6 @@
   (λ (item)
     (cons item '())))
 
-; Binds a variable to the static variables list in the class
-; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
-; Returns the new class
-; Box the values of the variables before adding them to the list ((box 10) -> #&10)
-(define bind-static-var
-  (λ (var-name value class)
-    (cons 
-     (cons
-      (cons var-name (caar class))
-      (enlist (cons (box value) (car (cdr (car class))))))
-     (cdr class))))
-
 ; Adds a variable name to the instance-variable list
 ; (set-instance-variable 'poop '((()())()()())) -> ((()())()()(poop))
 ; Return new class
@@ -72,7 +63,8 @@
        (caddr class)  ; the 3rd part
        (enlist (cons var-name (cadddr class)))))))) ; add the variable to the 4th part of class
       
-     
+; ------------------------------------------------------------------------------
+; BIND-XXX FUNCTIONS
 
 ; Adds a method to the class
 ; (bind-method 'poop (poop-closure) '(()  (()())  ()())) -> (()  ((poop)(poop-closure))  ()())
@@ -85,31 +77,71 @@
      (cons
       (cons
        (cons method-name (caadr class))
-       (enlist(cons closure (cadadr class))))
+       (enlist (cons closure (cadadr class))))
       (cddr class)))))
 
-; Looks up a method in a class
-; (lookup-method 'poop ((()())((poop)(poop-closure))()()) '()) -> poop-closure
-; Return closure
-; No boxes
+; Binds a variable to the static variables list in the class
+; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
+; Returns the new class
+; Box the values of the variables before adding them to the list ((box 10) -> #&10)
+(define bind-static-var
+  (λ (var-name value class)
+    (cons 
+     (cons
+      (cons var-name (caar class))
+      (enlist (cons (box value) (car (cdr (car class))))))
+     (cdr class))))
+
+; Binds the class to the environment
+; (bind-class 'poop (poop-class) (()()) -> ((poop)((poop-class)))
+; Returns the environment
+(define bind-class
+  (λ (class-name class env)
+    (cons (cons class-name (class-name-list env))
+          (list (cons class (class-body-list env))))))
+; ------------------------------------------------------------------------------
+
+; ------------------------------------------------------------------------------
+; LOOKUP-XXX FUNCTIONS
+
+; Looks up a method closure in a class
+; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
+; Returns the closure
 (define lookup-method
-  (lambda (method-name class instance)
-    1))
+  (lambda (method class)
+    (cond
+      ((null? (methodnames-list-in-class class)) (error 'lookup-method "method not declared"))
+      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
+      (else (lookup-method method 
+                           (cons
+                            (variables-in-class class)
+                            (cons
+                             (cons (rest-of-methodnames-in-class class)
+                                   (enlist (rest-of-methodvals-in-class class)))
+                             (cddr class))))))))
 
 ; Looks up the parent for the class
 ; (lookup-parent '((()()) (()()) (poop) ()) '()) -> poop
 ; (lookup-parent '((()()) (()()) () ()) '()) -> '() (if no parent return '())
 ; Returns the name of the parent class if there is one.
+; currently does nothing with the instance
 (define lookup-parent
   (lambda (class instance)
-    1))
+    (cond
+      ((null? (parent-of class))'())
+      (else (car (parent-of class))))))
 
 ; Looks up the class in the environment
 ; (lookup-class 'poop '((poop) (poop-class))) -> poop-class
 ; if no class return '()
 (define lookup-class
   (lambda (class env)
-    1))
+    (cond
+      ((null? (class-name-list env))'())
+      ((eq? (car (class-name-list env)) class) (car (class-body-list env)))
+      (else (lookup-class class
+                          (cons (cdr (class-name-list env))
+                                (list (cdr (class-body-list env)))))))))
 
 ; Looks up a variable in a class
 ; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
@@ -118,7 +150,7 @@
 (define lookup-var
   (lambda (var class instance)
     (cond
-      ((null? (varnames-list-in-class class))'())
+      ((null? (varnames-list-in-class class))(error 'lookup-var "var not declared"))
       ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
       (else (lookup-var var 
                         (cons
@@ -126,9 +158,32 @@
                                 (enlist (rest-of-varvals-in-class class)))
                           (cdr class))   
                         instance)))))
+; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
 ; Abstracted class accessor functions
+; Basic environment component gettors
+(define class-name-list
+  (λ (env)
+    (car env)))
+(define class-body-list
+  (λ (env)
+    (cadr env)))
+
+; Basic class component gettors
+(define variables-in-class
+  (λ (class)
+    (car class)))
+(define methods-in-class
+  (λ (class)
+    (cadr class)))
+(define parent-of
+  (λ (class)
+    (caddr class)))
+(define instance-vars-in-class
+  (λ (class)
+    (cadddr class)))
+
 ; varname accessor functions
 (define varnames-list-in-class
   (λ (class)
@@ -173,24 +228,6 @@
   (λ (class)
     (cdr (methodvals-list-in-class class))))
 ; ------------------------------------------------------------------------------
-
-      
-
-; Looks up a method closure in a class
-; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
-; Returns the closure
-(define lookup-method
-  (lambda (method class)
-    (cond
-      ((null? (methodnames-list-in-class class)) '())
-      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
-      (else (lookup-method method 
-                           (cons
-                            (car class)
-                            (cons
-                             (cons (rest-of-methodnames-in-class class)
-                                   (enlist (rest-of-methodvals-in-class class)))
-                             (cddr class))))))))
 
 
 ; Bind the variable to the value in the environment
