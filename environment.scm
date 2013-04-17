@@ -5,7 +5,7 @@
        ((m1 shit to do)(m2 shit to do)(m3 shit to do)))(pareniento)()))
 (define eenv
   '((poop c1 c2 c3)
-    (poop-body c1-body c2-body c3-body)))
+    ((poop-body) (c1-body) (c2-body) (c3-body))))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -48,18 +48,6 @@
   (λ (item)
     (cons item '())))
 
-; Binds a variable to the static variables list in the class
-; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
-; Returns the new class
-; Box the values of the variables before adding them to the list ((box 10) -> #&10)
-(define bind-static-var
-  (λ (var-name value class)
-    (cons 
-     (cons
-      (cons var-name (caar class))
-      (enlist (cons (box value) (car (cdr (car class))))))
-     (cdr class))))
-
 ; Adds a variable name to the instance-variable list
 ; (set-instance-variable 'poop '((()())()()())) -> ((()())()()(poop))
 ; Return new class
@@ -74,7 +62,8 @@
        (caddr class)  ; the 3rd part
        (enlist (cons var-name (cadddr class)))))))) ; add the variable to the 4th part of class
       
-     
+; ------------------------------------------------------------------------------
+; BIND-XXX FUNCTIONS
 
 ; Adds a method to the class
 ; (bind-method 'poop (poop-closure) '(()  (()())  ()())) -> (()  ((poop)(poop-closure))  ()())
@@ -87,15 +76,29 @@
      (cons
       (cons
        (cons method-name (caadr class))
-       (enlist(cons closure (cadadr class))))
+       (enlist (cons closure (cadadr class))))
       (cddr class)))))
+
+; Binds a variable to the static variables list in the class
+; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
+; Returns the new class
+; Box the values of the variables before adding them to the list ((box 10) -> #&10)
+(define bind-static-var
+  (λ (var-name value class)
+    (cons 
+     (cons
+      (cons var-name (caar class))
+      (enlist (cons (box value) (car (cdr (car class))))))
+     (cdr class))))
 
 ; Binds the class to the environment
 ; (bind-class 'poop (poop-class) (()()) -> ((poop)((poop-class)))
 ; Returns the environment
 (define bind-class
-(lambda (class-name class env)
-1))
+  (λ (class-name class env)
+    (cons (cons class-name (class-name-list env))
+          (list (cons class (class-body-list env))))))
+; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
 ; LOOKUP-XXX FUNCTIONS
