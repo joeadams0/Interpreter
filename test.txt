@@ -5,10 +5,7 @@ class Rectangle {
 class Square extends Rectangle{
 
 static var x = 5;
-static blah(){
-	return x;
-}
 static main(){
-	return blah();
+	return x;
 }
 }
