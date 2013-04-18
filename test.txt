@@ -1,14 +1,15 @@
 class Rectangle {
-  static var width = 10;
-static blah(){
-	return width;
-}
-}
-
-class Square extends Rectangle{
-
-static var x = 5;
-static main(){
-	return width;
+	static var poop = 20;
+  static swap(&x, &y){
+	var temp = x;
+	x = y;
+	y = temp;
+  }
+  
+  static main(){
+	  var x = 10;
+	  var y = 5;
+	  swap(x,Rectangle.poop);
+	  return x;
 }
 }

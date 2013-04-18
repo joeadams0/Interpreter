@@ -134,10 +134,10 @@
 (define func-call
   (lambda (f-name params class instance e)
     (cond
-      ((null? class) (error 'func-call "Function not declared before use"))
+      ((null? class) (error f-name "Function not declared before use"))
       ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name class e) (func-params (get-method-params f-name class e) params (push-layer (get-base-env e)) class instance) return '() '() class instance))))))) 
+                       (stmt-list (get-method-body f-name class e) (func-params (get-method-params f-name class e) params (push-layer (get-base-env e)) e class instance) return '() '() class instance))))))) 
 
 
 (define get-method-body
@@ -149,12 +149,20 @@
     (car (lookup-method m-name class e))))
 
 (define func-params 
-  (lambda (vars params e class instance)
+  (lambda (vars params e  oldenv class instance)
     (cond
       ((and (null? vars) (null? params)) e)
       ((or (null? vars) (null? params)) (error 'func-params "Function input does not match parameters required"))
-      ((eq? (car vars) '&) (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-var (car params) class instance e #t) e)))
-      (else (func-params (cdr vars) (cdr params) (bind (car vars) (value (car params) e) e))))))
+      ((eq? (car vars) '&) 
+       (if (and (list? (car params)) (eq? (operator (car params)) 'dot))
+           (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (dot-var-lookup (car params) oldenv class instance #t) e) oldenv class instance)
+           (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-var (car params) class instance oldenv #t) e) oldenv class instance)))
+      (else 
+       (func-params 
+        (cdr vars) 
+        (cdr params) 
+        (bind (car vars) (value (car params) oldenv class instance) e) 
+        oldenv class instance)))))
 
                               
 ; Interpretes the define a variable statement
@@ -296,4 +304,13 @@
        (cond
          ((eq? 'this s) (cons class (list instance)))
          ((eq? 'super s) (cons (lookup-parent class instance) (list instance)))
-         (else (cons (lookup-class s e) '(()))))))))
+         (else (cons s '(()))))))))
+
+(define dot-var-lookup
+  (lambda (s e class instance ref?)
+    (let ((dot (dot-eval s e class instance)))
+      (if (null? (lookup-var (car (cdr dot)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)) 
+          (error 'dot-var-lookup "Variable does not exist")
+          (lookup-var (car (cdr dot)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)))))
+    
+    

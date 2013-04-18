@@ -10,6 +10,7 @@
          ((or (boolean? ex) (number? ex)) ex)
          ((null? (lookup-var ex class instance e #f)) (error 'value "Variable does not exist in scope"))
          (else (lookup-var ex class instance e #f))))
+      ((eq? (operator ex) 'dot) dot-var-lookup ex e class instance)
       (else ((value-f ex e) ex e class instance)))))
 
 (define value-f

@@ -163,14 +163,14 @@
   (lambda (var class instance e reference?)
     (cond
       ((not (null? (lookup var e reference?))) (lookup var e reference?))
-      ((null? (varnames-list-in-class class))'())
-      ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
-      (else (lookup-var var 
-                        (cons
-                          (cons (rest-of-varnames-in-class class)
-                                (enlist (rest-of-varvals-in-class class)))
-                          (cdr class))   
-                        instance e reference?)))))
+      (else (lookup-static-var var class instance e reference?)))))
+
+(define lookup-static-var 
+  (lambda (var class instance e ref?)
+    (cond
+      ((null? class) '())
+      ((null? (lookup-layer var (car class) ref?)) (lookup-static-var var (lookup-class (lookup-parent class instance) e) instance e ref?))
+      (else (lookup-layer var (car class) ref?)))))
 ; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
@@ -283,7 +283,7 @@
     (cond
       ((null? (car l)) (error 'update-value "Variable not declared"))
       ((eq? var (car (car l))) (set-box! (car (car (cdr l))) value))
-      (else (update-value var value (cons (cdr (car l)) (cdr (car (cdr l)))))))))
+      (else (update-value var value (cons (cdr (car l)) (list (cdr (car (cdr l))))))))))
 
                                                                                     
 ;Updates the value of the binding
@@ -328,7 +328,7 @@
     (cond
       ((null? (car layer)) '())
       ((eq? var (first-var layer)) (first-value layer ref?))
-      (else (lookup-layer var (rest-layer layer))))))
+      (else (lookup-layer var (rest-layer layer) ref?)))))
 
 (define lookup-pointer
   (lambda (var e)
