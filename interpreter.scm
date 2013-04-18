@@ -28,7 +28,12 @@
 ; Returns an environment
 (define class-declare
   (lambda (class e)
-    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (car (cdr (cdr class))) (new-class)) e) e)))
+    (bind-class (car (cdr class)) 
+                (add-fields (car (cdr (cdr (cdr class))))
+                            (set-parent (car (cdr (cdr class))) 
+                                        (new-class)) 
+                            e)
+                e)))
 
 ; Parses the class fields
 ; Returns a class
@@ -86,7 +91,7 @@
       ((eq? (operator s) 'begin) (start-block s e return break continue  class instance))
       ((eq? (operator s) 'continue) (continue e))
       ((eq? (operator s) 'function) (function-declare s e class instance))
-      ((eq? (car s) 'funcall) (method-call s e  class instance) e)
+      ((eq? (car s) 'funcall) (method-call s e class instance) e)
       (else ((stmt-f s) s e return  class instance)))))
 
 ; Interpretes the if statement
@@ -117,11 +122,11 @@
     (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))
 
 (define func-call
-  (lambda (f-name params class-name instance e)
+  (lambda (f-name params class-name instance env)
     (cond
-      ((null? (lookup-method f-name  (lookup-class class-name e))) (error 'func-call "Function not declared before use"))
+      ((null? (lookup-method f-name  (lookup-class class-name env))) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name (lookup-class class-name e)) (func-params (get-method-params f-name (lookup-var class-name e)) params (push-layer (get-base-env e)) (lookup-class class-name e) instance) return '() '() (lookup-class class-name e) instance))))))) 
+                       (stmt-list (get-method-body f-name (lookup-class class-name env)) (func-params (get-method-params f-name (lookup-var class-name env)) params (push-layer (get-base-env env)) (lookup-class class-name env) instance) return '() '() (lookup-class class-name env) instance))))))) 
 
 
 (define get-method-body

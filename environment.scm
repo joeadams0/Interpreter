@@ -4,8 +4,8 @@
       ((m1 m2 m3)
        ((m1 shit to do)(m2 shit to do)(m3 shit to do)))(pareniento)()))
 (define eenv
-  '((poop c1 c2 c3)
-    ((poop-body) (c1-body) (c2-body) (c3-body))))
+  '(((poop c1 c2 c3)
+    ((poop-body) (c1-body) (c2-body) (c3-body)))))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -96,7 +96,7 @@
 
 (define bind-class
   (lambda (class-name class env)
-    (cons (bind-class-layer class-name class (peek-layer env)) '())))
+    (cons (bind-class-layer class-name class env) '())))
 
 ; Binds the class to the environment
 ; (bind-class 'poop (poop-class) ((()())) -> ((poop)((poop-class)))
@@ -178,6 +178,7 @@
 ; Basic environment component gettors
 (define class-name-list
   (λ (env)
+    (display e)
     (car (car (get-base-env env)))))
 (define class-body-list
   (λ (env)
