@@ -3,20 +3,20 @@
 ; moved to interpreter.rkt
 
 (define value
-  (lambda (ex e)
+  (lambda (ex e class instance)
     (cond
       ((not (list? ex)) 
        (cond 
          ((or (boolean? ex) (number? ex)) ex)
-         ((null? (lookup ex e)) (error 'value "Variable does not exist in scope"))
-         (else (lookup ex e))))
-      (else ((value-f ex e) ex e)))))
+         ((null? (lookup-var ex class instance e #f)) (error 'value "Variable does not exist in scope"))
+         (else (lookup-var ex class instance e #f))))
+      (else ((value-f ex e) ex e class instance)))))
 
 (define value-f
   (lambda (ex e)
     (cond
       ((eq? (operator ex) '=) assign-stmt)
-      ((eq? (operator ex) 'funcall) func-call)
+      ((eq? (operator ex) 'funcall) method-call)
       ((eq? (operator ex) '+) (math-f +))
       ((eq? (operator ex) '-) (math-f -))
       ((eq? (operator ex) '/) (math-f quotient))
@@ -35,9 +35,9 @@
 
 (define math-f
   (lambda (f)
-    (lambda (ex e)
+    (lambda (ex e class instance)
       (cond
-        ((and (eq? (operator ex) '-) (eq? (length ex) 2)) (- 0 (value (operand1 ex) e)))
-        ((eq? (operator ex) '!) (not (value (operand1 ex) e)))
-        (else (f (value (operand1 ex) e) (value (operand2 ex) e)))))))
+        ((and (eq? (operator ex) '-) (eq? (length ex) 2)) (- 0 (value (operand1 ex) e class instance)))
+        ((eq? (operator ex) '!) (not (value (operand1 ex) e class instance)))
+        (else (f (value (operand1 ex) e class instance ) (value (operand2 ex) e class instance)))))))
       

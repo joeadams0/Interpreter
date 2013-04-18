@@ -13,8 +13,9 @@
 (define new-environment
   (lambda ()
     '(
-      ()
-      ()   )))
+      (()
+      ()))))
+
 ;(define new-environment
 ;  (lambda ()
 ;    (bind 'FALSE #f (bind 'TRUE #t (bind 'false #f (bind 'true #t (push-layer '())))))))
@@ -92,10 +93,15 @@
       (enlist (cons (box value) (car (cdr (car class))))))
      (cdr class))))
 
-; Binds the class to the environment
-; (bind-class 'poop (poop-class) (()()) -> ((poop)((poop-class)))
-; Returns the environment
+
 (define bind-class
+  (lambda (class-name class env)
+    (cons (bind-class-layer class-name class (peek-layer env)) '())))
+
+; Binds the class to the environment
+; (bind-class 'poop (poop-class) ((()())) -> ((poop)((poop-class)))
+; Returns the environment
+(define bind-class-layer
   (λ (class-name class env)
     (cons (cons class-name (class-name-list env))
           (list (cons class (class-body-list env))))))
@@ -148,8 +154,9 @@
 ; Returns the UNBOXED value of the variable
 ; Ignore instance for now
 (define lookup-var
-  (lambda (var class instance)
+  (lambda (var class instance e reference?)
     (cond
+      ((not (null? (lookup var e reference?))) (lookup var e reference?))
       ((null? (varnames-list-in-class class))'())
       ((eq? (first-varname-in-class class) var) (unbox (first-varval-in-class class)))
       (else (lookup-var var 
@@ -157,18 +164,24 @@
                           (cons (rest-of-varnames-in-class class)
                                 (enlist (rest-of-varvals-in-class class)))
                           (cdr class))   
-                        instance)))))
+                        instance e reference?)))))
 ; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
+
+(define get-base-env
+  (lambda (e)
+    (cond
+      ((null? (cdr e)) e)
+      (else (get-base-env (cdr e))))))
 ; Abstracted class accessor functions
 ; Basic environment component gettors
 (define class-name-list
   (λ (env)
-    (car env)))
+    (car (car (get-base-env env)))))
 (define class-body-list
   (λ (env)
-    (cadr env)))
+    (cadr (car (get-base-env env)))))
 
 ; Basic class component gettors
 (define variables-in-class
@@ -247,15 +260,35 @@
             '())  )
           (pop-layer environment))))
 
-; Updates the value of the binding
-; Returns the value
+
 (define update-binding
+  (lambda (var value e class instance)
+    (cond
+      ((not (null? (lookup var e #t))) (update-binding-env var value e))
+      ((not (null? (lookup-var var class '() (new-environment) #t))) (update-static-var var value class))
+      ((not (null? (lookup-var var (new-class) instance (new-environment) #t))) (update-instance-var var value class instance)))))
+
+(define update-static-var 
+  (lambda (var value class)
+      (update-value var value (car class))))
+
+(define update-value 
+  (lambda (var value l)
+    (cond
+      ((null? (car l)) (error 'update-value "Variable not declared"))
+      ((eq? var (car (car l))) (set-box! (car (car (cdr l))) value))
+      (else (update-value var value (cons (cdr (car l)) (cdr (car (cdr l)))))))))
+
+                                                                                    
+;Updates the value of the binding
+; Returns the value
+(define update-binding-env
   (lambda (var value e)
     (cond
       ((null? e) (error 'update-binding "Variable not declared"))
-      ((null? (car (peek-layer e))) (update-binding var value (pop-layer e)))
+      ((null? (car (peek-layer e))) (update-binding-env var value (pop-layer e)))
       ((eq? var (first-var (peek-layer e))) (set-box! (first-value-box (peek-layer e)) value) value)
-      (else (update-binding var value (cons (rest-layer (peek-layer e)) (pop-layer e)))))))
+      (else (update-binding-env var value (cons (rest-layer (peek-layer e)) (pop-layer e)))))))
        
 ; Removes the binding from the first layer
 ; Returns an environment
@@ -271,24 +304,24 @@
       ((not (pair? (car layer))) (k '(()())))
       ((eq? var (first-var layer)) (remove-layer-binding var (rest-layer layer) k))
       (else (remove-layer-binding var (rest-layer layer) (lambda (layer2)
-                                                           (k (cons (cons (first-var layer) (get-vars layer2)) (cons (cons (box (first-value layer)) (get-vals layer2)) '())))))))))
+                                                           (k (cons (cons (first-var layer) (get-vars layer2)) (cons (cons (box (first-value layer #f)) (get-vals layer2)) '())))))))))
 
 ; Looks up binding in the environment
 ; Returns the value bound to the variable
 (define lookup
-  (lambda (var e)
+  (lambda (var e ref?)
     (cond
       ((null? e) '())
-      ((exists-binding? var (peek-layer e)) (lookup-layer var (peek-layer e)))
-      (else (lookup var (pop-layer e))))))
+      ((exists-binding? var (peek-layer e)) (lookup-layer var (peek-layer e) ref?))
+      (else (lookup var (pop-layer e) ref?)))))
 
 ; Looks up binding in the layer
 ; Returns value bound to variable
 (define lookup-layer
-  (lambda (var layer)
+  (lambda (var layer ref?)
     (cond
       ((null? (car layer)) '())
-      ((eq? var (first-var layer)) (first-value layer))
+      ((eq? var (first-var layer)) (first-value layer ref?))
       (else (lookup-layer var (rest-layer layer))))))
 
 (define lookup-pointer
@@ -321,9 +354,10 @@
 
 ; Returns first value in the layer
 (define first-value
-  (lambda (layer)
+  (lambda (layer ref?)
     (cond 
       ((null? (car layer)) '())
+      (ref? (car (car (cdr layer))))
       (else (unbox (car (car (cdr layer))))))))
 
 ; Returns first value box in the layer

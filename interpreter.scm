@@ -5,7 +5,7 @@
 ; Begins interpretation process
 (define interpret
   (lambda (filename class-name)
-    (class-list (parser filename) (new-environment))))
+    (func-call 'main '() class-name '() (class-list (parser filename) (new-environment)))))
 
 ; Parses the class list
 ; Returns an environment with all of th classes in it
@@ -22,80 +22,78 @@
   (lambda (p e return break continue class instance)
     (cond
       ((null? p) (end-block e))
-      (else (stmt-list (cdr p) (stmt (car p) e return break continue) return break continue)))))
+      (else (stmt-list (cdr p) (stmt (car p) e return break continue class instance) return break continue class instance)))))
 
 ; Declares a new class
 ; Returns an environment
 (define class-declare
   (lambda (class e)
-    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (car (cdr (cdr class))) (new-class))) e)))
+    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (car (cdr (cdr class))) (new-class)) e) e)))
 
 ; Parses the class fields
 ; Returns a class
 (define add-fields
-  (lambda (l class)
+  (lambda (l class e)
     (cond
       ((null? l) class)
-      (else (add-fields (cdr l) (new-field (car l) class))))))
+      (else (add-fields (cdr l) (new-field (car l) class e) e)))))
 
 ; Adds a new field to class
 ; Returns the class
 (define new-field
-  (lambda (field class)
+  (lambda (field class e)
     (cond
-      ((eq? (operator field) 'static-var) (static-var-dec field class))
-      ((eq? (operator field) 'static-function) (method-dec field class))
-      ((eq? (operator field) 'var) (instance-var-dec field class))
-      ((eq? (operator field) 'function) (method-dec field class)))))
+      ((eq? (operator field) 'static-var) (static-var-dec field class e))
+      ((eq? (operator field) 'static-function) (method-dec field class e))
+      ((eq? (operator field) 'var) (instance-var-dec field class e))
+      ((eq? (operator field) 'function) (method-dec field class e)))))
 
 ; Adds a static var
 ; returns the class
 (define static-var-dec  
-  (lambda (field class)
-    (display class)
-    (newline)
+  (lambda (field class e)
     (cond
-      ((not (null? (lookup-var (car (cdr field)) class '()))) (error 'static-var-dec "Variable already exists"))
+      ((not (null? (lookup-var (car (cdr field)) class '() e #f))) (error 'static-var-dec "Variable already exists"))
       ((= (length field) 2) (bind-static-var (car (cdr field)) '(1) class))
-      (else (bind-static-var (car (cdr field)) (value (car (cdr (cdr field))) class) class)))))
+      (else (bind-static-var (car (cdr field)) (value (car (cdr (cdr field))) e class '()) class)))))
 
 ; Adds an instance variable
 ; Returns the class
 (define instance-var-dec
-  (lambda (field class)
+  (lambda (field class e)
     (cond
-      ((not (null? (lookup-var (car (cdr field)) class '()))) (error 'static-var-dec "Variable already exists"))
+      ((not (null? (lookup-var (car (cdr field)) class '() e #f))) (error 'static-var-dec "Variable already exists"))
       (else (bind-instance-var (car (cdr field)) class)))))
 
 ; (params, body, class function)
 ; Returns environemnt
 (define method-dec
-  (lambda (field class)
+  (lambda (field class e)
     (cond
-      ((not (null? (lookup-method (car (cdr field)) class ))) (error 'func-declare "M already exists"))
+      ((not (null? (lookup-method (car (cdr field)) class))) (error 'func-declare "Method already exists"))
       ((bind-method (car (cdr field)) (cons (car (cdr (cdr field))) (cons (car (cdr (cdr (cdr field)))) (lambda (e) (lookup-class (car (cdr (field))) e)))) class)))))  
     
 ; Interpretes a statement
 ; s is the statement, e is the environment
 ; returns an environment
 (define stmt
-  (lambda (s e return break continue)
+  (lambda (s e return break continue class instance)
     (cond
-      ((eq? (operator s) '=) (assign-stmt s e) e)
-      ((eq? (operator s) 'var) (define-stmt s e))
+      ((eq? (operator s) '=) (assign-stmt s e class instance) e)
+      ((eq? (operator s) 'var) (define-stmt s e class instance))
       ((eq? (operator s) 'break) (break e))
-      ((eq? (operator s) 'if) (if-stmt s e return break continue))
-      ((eq? (operator s) 'begin) (start-block s e return break continue))
+      ((eq? (operator s) 'if) (if-stmt s e return break continue  class instance))
+      ((eq? (operator s) 'begin) (start-block s e return break continue  class instance))
       ((eq? (operator s) 'continue) (continue e))
-      ((eq? (operator s) 'function) (function-declare s e))
-      ((eq? (car s) 'funcall) (func-call s e) e)
-      (else ((stmt-f s) s e return)))))
+      ((eq? (operator s) 'function) (function-declare s e class instance))
+      ((eq? (car s) 'funcall) (method-call s e  class instance) e)
+      (else ((stmt-f s) s e return  class instance)))))
 
 ; Interpretes the if statement
 ; s is the statement, e is the environment 
 ; returns an environment
 (define if-stmt
-  (lambda (s e return break continue)
+  (lambda (s e return break continue )
     (cond
       ; If it is an if statement 
       ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e return break continue))
@@ -114,12 +112,16 @@
                  (loop (operand1 s) (operand2 s) e))))))
                
 
+(define method-call
+  (lambda (s e class instance)
+    (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))
+
 (define func-call
-  (lambda (f-name params class instance e)
+  (lambda (f-name params class-name instance e)
     (cond
-      ((null? (lookup-method f-name  class)) (error 'func-call "Function not declared before use"))
+      ((null? (lookup-method f-name  (lookup-class class-name e))) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name class) (func-params (get-method-params f-name class) params (push-layer e)) return '() '() class instance))))))) 
+                       (stmt-list (get-method-body f-name (lookup-class class-name e)) (func-params (get-method-params f-name (lookup-var class-name e)) params (push-layer (get-base-env e)) (lookup-class class-name e) instance) return '() '() (lookup-class class-name e) instance))))))) 
 
 
 (define get-method-body
@@ -131,11 +133,11 @@
     (car (lookup-method m-name class))))
 
 (define func-params 
-  (lambda (vars params e)
+  (lambda (vars params e class instance)
     (cond
       ((and (null? vars) (null? params)) e)
       ((or (null? vars) (null? params)) (error 'func-params "Function input does not match parameters required"))
-      ((eq? (car vars) '&) (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-pointer (car params) e) e)))
+      ((eq? (car vars) '&) (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-var (car params) class instance e #t) e)))
       (else (func-params (cdr vars) (cdr params) (bind (car vars) (value (car params) e) e))))))
 
                               
@@ -143,23 +145,23 @@
 ; s is the statement, e is the environment
 ; returns an environment
 (define define-stmt
-  (lambda (s e)
+  (lambda (s e class instance)
     (cond
-      ((not (null? (lookup (operand1 s) e))) (error 'define-stmt "Variable is already defined"))
+      ((not (null? (lookup-var (operand1 s) class instance e #t))) (error 'define-stmt "Variable is already defined"))
       ; Just declare statement
       ((null? (operand2 s)) (bind (operand1 s) '(1) e))
       ; declare and assign
-      (else (bind (operand1 s) (value (operand2 s) e) e)))))
+      (else (bind (operand1 s) (value (operand2 s) e class instance) e)))))
 
 ; Interpretes the variable assignment statement
 ; s is the statement, e is the environment
 ; returns a list which is (value environment)
 (define assign-stmt
-  (lambda (s e)
+  (lambda (s e class instance)
     (cond
-      ((null?(lookup (operand1 s) e)) (error 'assign-stmt "Variable not declared"))
+      ((null? (lookup-var (operand1 s) class instance e #f)) (error 'assign-stmt "Variable not declared"))
       ; Return the value consed onto a list containing the environment
-      (else (update-binding (operand1 s) (value (operand2 s) e) e))))) 
+      (else (update-binding (operand1 s) (value (operand2 s) e class instance) e class instance))))) 
 
 ; Adds another layer to the environment
 ; Starts statement list on that block
@@ -177,12 +179,13 @@
 ; s is the statement, e is the environment
 ; returns an environment
 (define return-stmt
-  (lambda(s e return)
-      (return (value (car (cdr s)) e))))
+  (lambda(s e return class instance)
+      (return (value (car (cdr s)) e class instance))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Helpers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 ; Determines the function that is needed to interprete the statement type
 ; returns a function
@@ -255,3 +258,10 @@
       ((list? in) (error 'display-filter "Something is wrong here... trying to return list."))
       (else in))))
 
+
+; Evaluates the dot expression
+; Return the class that the statment evaluates to
+; x.y = 10 (dot-eval x
+(define left-dot
+  (lambda (s e class instance)
+    1))

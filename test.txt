@@ -2,9 +2,14 @@ class Rectangle {
   static var width = 10;
   static var height = 12;
 
-  static area(a, b) {
+  static area() {
 	height = 5;
     var a = width * height;
     return a;
+  }
+  
+  static main (){
+	height = area();
+	return height;
   }
 }
