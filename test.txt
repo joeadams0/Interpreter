@@ -1,15 +1,14 @@
 class Rectangle {
   static var width = 10;
-  static var height = 12;
+}
 
-  static area() {
-	height = 5;
-    var a = width * height;
-    return a;
-  }
-  
-  static main (){
-	height = area();
-	return height;
-  }
+class Square extends Rectangle{
+
+static var x = 5;
+static blah(){
+	return x;
+}
+static main(){
+	return blah();
+}
 }

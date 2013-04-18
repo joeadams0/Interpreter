@@ -96,7 +96,7 @@
 
 (define bind-class
   (lambda (class-name class env)
-    (cons (bind-class-layer class-name class (peek-layer env)) '())))
+    (cons (bind-class-layer class-name class env) '())))
 
 ; Binds the class to the environment
 ; (bind-class 'poop (poop-class) ((()())) -> ((poop)((poop-class)))
@@ -137,17 +137,22 @@
       ((null? (parent-of class))'())
       (else (car (parent-of class))))))
 
+
+(define lookup-class
+  (lambda (class env)
+    (lookup-class-layer class (class-name-list env) (class-body-list env)))) 
+
 ; Looks up the class in the environment
 ; (lookup-class 'poop '((poop) (poop-class))) -> poop-class
 ; if no class return '()
-(define lookup-class
-  (lambda (class env)
+(define lookup-class-layer
+  (lambda (class class-names class-bodies)
     (cond
-      ((null? (class-name-list env))'())
-      ((eq? (car (class-name-list env)) class) (car (class-body-list env)))
-      (else (lookup-class class
-                          (cons (cdr (class-name-list env))
-                                (list (cdr (class-body-list env)))))))))
+      ((null? class-names)'())
+      ((eq? (car class-names) class) (car class-bodies))
+      (else (lookup-class-layer class
+                          (cdr class-names)
+                                (cdr class-bodies))))))
 
 ; Looks up a variable in a class
 ; (lookup 'poop (((poop)(#&10))()()()) '()) -> 10
@@ -181,7 +186,7 @@
     (car (car (get-base-env env)))))
 (define class-body-list
   (λ (env)
-    (cadr (car (get-base-env env)))))
+    (car (cdr (car (get-base-env env))))))
 
 ; Basic class component gettors
 (define variables-in-class

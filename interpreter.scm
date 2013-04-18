@@ -28,7 +28,13 @@
 ; Returns an environment
 (define class-declare
   (lambda (class e)
-    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (car (cdr (cdr class))) (new-class)) e) e)))
+    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (get-p class) (new-class)) e) e)))
+
+(define get-p
+  (lambda (class)
+    (cond
+      ((null? (car (cdr (cdr class)))) '())
+      (else (car (cdr (car (cdr (cdr class)))))))))
 
 ; Parses the class fields
 ; Returns a class
@@ -114,14 +120,18 @@
 
 (define method-call
   (lambda (s e class instance)
-    (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))
+    (cond
+      ((dot? (car (cdr s))) 
+       (let ((dot (dot-eval (car (cdr s)))))
+         (func-call (car (cdr dot)) (cdr (cdr s)) (car (car dot)) (car (cdr (car dot))) e)))
+      (else (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))))
 
 (define func-call
   (lambda (f-name params class-name instance e)
     (cond
       ((null? (lookup-method f-name  (lookup-class class-name e))) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name (lookup-class class-name e)) (func-params (get-method-params f-name (lookup-var class-name e)) params (push-layer (get-base-env e)) (lookup-class class-name e) instance) return '() '() (lookup-class class-name e) instance))))))) 
+                       (stmt-list (get-method-body f-name (lookup-class class-name e)) (func-params (get-method-params f-name (lookup-class class-name e)) params (push-layer (get-base-env e)) (lookup-class class-name e) instance) return '() '() (lookup-class class-name e) instance))))))) 
 
 
 (define get-method-body
@@ -180,7 +190,7 @@
 ; returns an environment
 (define return-stmt
   (lambda(s e return class instance)
-      (return (value (car (cdr s)) e class instance))))
+    (return (value (car (cdr s)) e class instance))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Helpers
@@ -259,9 +269,25 @@
       (else in))))
 
 
+(define dot?
+  (lambda (s)
+    (cond
+      ((not (list? s)) #f)
+      ((eq? 'dot (car s)) #t)
+      (else #f))))
+
 ; Evaluates the dot expression
 ; Return the class that the statment evaluates to
 ; x.y = 10 (dot-eval x
-(define left-dot
+(define dot-eval
   (lambda (s e class instance)
-    1))
+    (cons (lhs-eval (car (cdr s)) e class instance) (list (car (cdr (cdr s)))))))
+
+(define lhs-eval
+  (lambda (s e class instance)
+    (cond
+      ((not (list? s)) 
+       (cond
+         ((eq? 'this s) (cons class (list instance)))
+         ((eq? 'super s) (cons (lookup-parent class) (list instance)))
+         (else (cons (lookup-class s e) '(()))))))))
