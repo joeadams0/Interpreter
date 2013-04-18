@@ -6,6 +6,9 @@
 (define eenv
   '(((poop c1 c2 c3)
     ((poop-body) (c1-body) (c2-body) (c3-body)))))
+(define tenv
+  '(((Square Rectangle) ((((x) (#&5)) ((main) ((() ((return x)) . (something procedure)))) (Rectangle) ()) 
+                        (((width) (#&10)) (() ()) (()) ())))))
 
 ; The environment for the interpreter
 ; Return a new environment
@@ -74,7 +77,7 @@
 (define bind-method
   (lambda (method-name closure class)
     (cons 
-     (car class)
+     (variables-in-class class)
      (cons
       (cons
        (cons method-name (caadr class))
@@ -140,6 +143,8 @@
 
 (define lookup-class
   (lambda (class env)
+    (display env)
+    (newline)
     (lookup-class-layer class (class-name-list env) (class-body-list env)))) 
 
 ; Looks up the class in the environment
@@ -183,7 +188,6 @@
 ; Basic environment component gettors
 (define class-name-list
   (λ (env)
-    (display e)
     (car (car (get-base-env env)))))
 (define class-body-list
   (λ (env)
@@ -228,7 +232,9 @@
 ; Methodname accessor functions
 (define methodnames-list-in-class
   (λ (class)
-    (caadr class)))
+    (display class)
+    (newline)
+    (car (methods-in-class class))))
 (define first-methodname-in-class
   (λ (class)
     (car (methodnames-list-in-class class))))

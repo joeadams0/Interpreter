@@ -75,9 +75,16 @@
 ; Returns environemnt
 (define method-dec
   (lambda (field class e)
+    (display 'field)
+    (display field)
+    (newline)
     (cond
       ((not (null? (lookup-method (car (cdr field)) class))) (error 'func-declare "Method already exists"))
-      ((bind-method (car (cdr field)) (cons (car (cdr (cdr field))) (cons (car (cdr (cdr (cdr field)))) (lambda (e) (lookup-class (car (cdr (field))) e)))) class)))))  
+      ((bind-method (car (cdr field)) 
+                    (cons (car (cdr (cdr field))) 
+                          (cons (car (cdr (cdr (cdr field)))) 
+                                (list (lambda (e) (lookup-class (car (cdr (field))) e)))))
+                    class)))))
     
 ; Interpretes a statement
 ; s is the statement, e is the environment
@@ -128,6 +135,8 @@
 
 (define func-call
   (lambda (f-name params class-name instance e)
+    (display class-name)
+    (newline)
     (cond
       ((null? (lookup-method f-name  (lookup-class class-name e))) (error 'func-call "Function not declared before use"))
       (else (call/cc (lambda (return)
