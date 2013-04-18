@@ -113,21 +113,19 @@
 ; ------------------------------------------------------------------------------
 ; LOOKUP-XXX FUNCTIONS
 
+(define lookup-method
+  (lambda (method class e)
+    (lookup-method-layer method (methodnames-list-in-class class) (methodvals-list-in-class class))))
+
 ; Looks up a method closure in a class
 ; (lookup 'poop (()((poop)(poop-closure))()()))  -> poop-closure
 ; Returns the closure
-(define lookup-method
-  (lambda (method class)
+(define lookup-method-layer
+  (lambda (method method-names method-closure)
     (cond
-      ((null? (methodnames-list-in-class class)) '())
-      ((eq? (first-methodname-in-class class) method) (first-methodval-in-class class))
-      (else (lookup-method method 
-                           (cons
-                            (variables-in-class class)
-                            (cons
-                             (cons (rest-of-methodnames-in-class class)
-                                   (enlist (rest-of-methodvals-in-class class)))
-                             (cddr class))))))))
+      ((null? method-names) '())
+      ((eq? (car method-names) method) (car method-closure))
+      (else (lookup-method-layer method (cdr method-names) (cdr method-closure))))))
 
 ; Looks up the parent for the class
 ; (lookup-parent '((()()) (()()) (poop) ()) '()) -> poop
@@ -143,8 +141,6 @@
 
 (define lookup-class
   (lambda (class env)
-    (display env)
-    (newline)
     (lookup-class-layer class (class-name-list env) (class-body-list env)))) 
 
 ; Looks up the class in the environment
@@ -232,8 +228,6 @@
 ; Methodname accessor functions
 (define methodnames-list-in-class
   (λ (class)
-    (display class)
-    (newline)
     (car (methods-in-class class))))
 (define first-methodname-in-class
   (λ (class)

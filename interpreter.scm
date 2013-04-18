@@ -5,7 +5,8 @@
 ; Begins interpretation process
 (define interpret
   (lambda (filename class-name)
-    (func-call 'main '() class-name '() (class-list (parser filename) (new-environment)))))
+    (let ((env (class-list (parser filename) (new-environment))))
+      (func-call 'main '() (lookup-class class-name env) '() env))))
 
 ; Parses the class list
 ; Returns an environment with all of th classes in it
@@ -75,11 +76,8 @@
 ; Returns environemnt
 (define method-dec
   (lambda (field class e)
-    (display 'field)
-    (display field)
-    (newline)
     (cond
-      ((not (null? (lookup-method (car (cdr field)) class))) (error 'func-declare "Method already exists"))
+      ((not (null? (lookup-method (car (cdr field)) class e))) (error 'func-declare "Method already exists"))
       ((bind-method (car (cdr field)) 
                     (cons (car (cdr (cdr field))) 
                           (cons (car (cdr (cdr (cdr field)))) 
@@ -129,27 +127,26 @@
   (lambda (s e class instance)
     (cond
       ((dot? (car (cdr s))) 
-       (let ((dot (dot-eval (car (cdr s)))))
-         (func-call (car (cdr dot)) (cdr (cdr s)) (car (car dot)) (car (cdr (car dot))) e)))
+       (let ((dot (dot-eval (car (cdr s)) e class instance)))
+         (func-call (car (cdr dot)) (cdr (cdr s)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e)))
       (else (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))))
 
 (define func-call
-  (lambda (f-name params class-name instance e)
-    (display class-name)
-    (newline)
+  (lambda (f-name params class instance e)
     (cond
-      ((null? (lookup-method f-name  (lookup-class class-name e))) (error 'func-call "Function not declared before use"))
+      ((null? class) (error 'func-call "Function not declared before use"))
+      ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name (lookup-class class-name e)) (func-params (get-method-params f-name (lookup-class class-name e)) params (push-layer (get-base-env e)) (lookup-class class-name e) instance) return '() '() (lookup-class class-name e) instance))))))) 
+                       (stmt-list (get-method-body f-name class e) (func-params (get-method-params f-name class e) params (push-layer (get-base-env e)) class instance) return '() '() class instance))))))) 
 
 
 (define get-method-body
-  (lambda (m-name class)
-    (car (cdr (lookup-method m-name class)))))
+  (lambda (m-name class e)
+    (car (cdr (lookup-method m-name class e)))))
 
 (define get-method-params
-  (lambda (m-name class)
-    (car (lookup-method m-name class))))
+  (lambda (m-name class e)
+    (car (lookup-method m-name class e))))
 
 (define func-params 
   (lambda (vars params e class instance)
@@ -192,7 +189,7 @@
   (lambda (e)
     (cond
       ((null? (pop-layer e)) e)
-      (else (pop-layer e)))))
+      (else (pop-layer e))))) 
 
 ; Interpretes the return statement
 ; s is the statement, e is the environment
@@ -298,5 +295,5 @@
       ((not (list? s)) 
        (cond
          ((eq? 'this s) (cons class (list instance)))
-         ((eq? 'super s) (cons (lookup-parent class) (list instance)))
+         ((eq? 'super s) (cons (lookup-parent class instance) (list instance)))
          (else (cons (lookup-class s e) '(()))))))))

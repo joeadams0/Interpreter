@@ -1,11 +1,14 @@
 class Rectangle {
   static var width = 10;
+static blah(){
+	return width;
+}
 }
 
 class Square extends Rectangle{
 
 static var x = 5;
 static main(){
-	return x;
+	return width;
 }
 }
