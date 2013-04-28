@@ -1,124 +1,142 @@
 
-<!-- saved from url=(0109)https://blackboard.case.edu/bbcswebdav/pid-914164-dt-content-rid-1840333_1/courses/eecs345_hsc21_1/part4.html -->
+<!-- saved from url=(0116)https://blackboard.case.edu/bbcswebdav/pid-914247-dt-content-rid-1855065_1/courses/eecs345_hsc21_1/part5%281%29.html -->
 <html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>EECS 345: Interpreter Project, Part 4</title>
+<title>EECS 345: Interpreter Project, Part 5</title>
 </head>
 
 <body>
 <h2>EECS 345: Programming Language Concepts</h2>
-<h2>Interpreter Project, Part 4</h2>
-<h3>Due Wednesday, April 17</h3>
+<h2>Interpreter Project, Part 5</h2>
+<h3>Due Monday, April 29</h3>
 
 <p><em>For this and all Interpreter Project's, you are strongly encouraged, but not required, to work in a team of two.  
-You will be building off of the interpreter you wrote for part 1.  As a result, it is expected that you keep the same teams
-that you used for part 3.  If you need to change your team, please speak to the course instructor.</em></p>
+You will be building off of the interpreter you wrote for part 4.  As a result, it is expected that you keep the same teams
+that you used for part 4.  If you need to change your team, please speak to the course instructor.</em></p>
 
-<p>In this homework, you will expand on the interpreter of part 3 adding class definitions. <em>Note that we will not be adding
-objects in this part of the interpreter.</em>
-We still assume all variables store integers (for the individuals working solo) and integers and boolean (for those
-working in teams).  Likewise, all functions will only return integers (for the individuals working solo) and integers
-and boolean (for those working in teams).  For teams, we will also still allow functions to be both call-by-value
-and call-by-reference.</p>
+<p>In this homework, you will expand on the interpreter of part 4 by adding objects (instances of classes), and the ability
+to throw and catch exceptions. </p>
 
-<p>Here is an example of a program of two classes, using only static fields and methods:
-</p><pre>class Rectangle {
-  static var width = 10;
-  static var height = 12;
+<p><strong>Details from pervious parts that must be maintained:</strong><br>
+&nbsp;&nbsp;<em>For pairs:</em>  all variables may now store either integers or objects.  Likewise, functions may now return integers or
+objects (or they may not return a value).  Functions must be able to modify class and instance fields as well as call other 
+functions.  All functions are call-by-value (with object parameters, if you pass the object itself and you are using boxes for your environment, 
+you will get the same behavior as with normal Java).<br>
+&nbsp;&nbsp;<em>For teams:</em>  all variables may now store integers, booleans, or objects.  Likewkse, functions may now return integers, booleans,
+or objects (or they may not return a value).  Functions must be able to modify clas and instance fields as well as call other functions.
+Function parameters can be either call-by-value or call-by-reference.  The assignment operator returns a value.  Function overloading is permitted.</p>
 
-  static area() {
-    var a = width * height;
-    return a;
+<p>An example program is as follows:
+</p><pre>class A {
+  var x = 6;
+  var y = 7;
+
+  prod() {
+    return this.x * this.y;
   }
 
-  static setSize(x, y) {
-    width = x;
-    height = y;
+  set2(a, b) {
+    x = a;
+    y = b;
   }
 }
 
-class Square extends Rectangle {
-  static setSize(x) {
-    super.setSize(x, x);
+class B extends A {
+  set1(a) {
+    set2(a, a);
   }
 
-  static main() {
-    setSize(20);
-    return area();
+  static main () {
+    var b = new B();
+    b.set1(10);
+    return b.prod();
   }
 }
 </pre>
 
 Your interpreter should now take two parameters, a <em>file</em> and a <em>classname</em>.  For example,
-<tt>(interpret "MyProgram.j" "Square")</tt>, where <em>file</em> is the name of the file to be interpreted, and <em>classname</em>
+<tt>(interpret "MyProgram.j" "B")</tt>, where <em>file</em> is the name of the file to be interpreted, and <em>classname</em>
 is the name of the class whose main method you are to run.  The function should call <tt>parser</tt> on the file
 <em>file</em>, and then lookup <tt>(string-&gt;symbol <em>classname</em>)</tt> in the environment to get the desired
 class, and then lookup the <tt>main</tt> method of this class.
 The final value returned by your interpreter should be whatever is returned by <tt>main</tt>.<p></p>
 
-<h4>For Teams</h4>
-
-<p>For those working in a team, you must also allow for method/function overloading.  Since we are only checking types dynamically,
-an overloaded function must have a different number of parameters.</p>
-
 <h4>Details</h4>
 
 <p>
-</p><li>Variables and methods can now be static (class) or non-static (instance).</li>
+</p><ol><li>Note that we now allow the object type in our language.  So, objects can be assigned to variables,
+passed as parameters, and returned from functions.</li>
+<li>All mathematical and comparison operators should only be implemented for integers (or booleans).</li>
+<li>The only operator that will work on objects is the <tt>dot</tt> operator.</li>
+<li>The <tt>new</tt> operator will return an object of the desired class.</li>
+<li>The <tt>new</tt> operator can only be used in expressions, not as the start of a statement.</li>
+<li>Variables and methods can now be static (class) or non-static (instance).</li>
 <li>The <tt>main</tt> method should be static.</li>
-<li>The language supports use of <tt>super</tt>.</li>
+<li>The language supports use of <tt>this</tt> and <tt>super</tt> object references.</li>
 <li>The top level of the program is only class definitions.</li>
-<li>Each class definition consists of variable declarations and function definitions (just like the top level of part 3 of the interpreter).</li>
-<li>Although it will not be useful until the next part of the interpreter, not that nested uses of the <tt>dot</tt> operator will be allowed.</li>
+<li>Each class definition consists of assignment statements and method definitions.</li>
+<li>Nested uses of the <tt>dot</tt> operator are allowed.</li>
+<li>The language supports <tt>try</tt>, <tt>catch</tt>, and <tt>finally</tt> blocks, and the <tt>throw</tt> statement.</li></ol><p></p>
 
 
 <h4>Parser Constructs</h4>
 
-<pre>class A {              =&gt;   (class A () <em>body</em>)
+<p>
+</p><pre>class A {              =&gt;   (class A () <em>body</em>)
   <em>body</em>
 
 class B extends A {    =&gt;   (class B (extends A)  <em>body</em>)
   <em>body</em>
 
-static var x = 5;      =&gt;   (static-var x 5)
+static x = 5;          =&gt;   (static-= x 5)
 
 static main() {        =&gt;   (static-function main () <em>body</em>)
   <em>body</em>
 
-A.x                    =&gt;   (dot A x)
+new A()                =&gt;   (new A)
 
-A.f(3,5)               =&gt;   (funcall (dot A f) 3 5)
+a.x                    =&gt;   (dot a x)
 
+new A().f(3,5)         =&gt;   (funcall (dot (new A) f) 3 5)
+
+throw e;               =&gt;   (throw e)
+
+try {                  =&gt;   (try <em>body</em> (catch (e) <em>body</em>) (finally <em>body</em>))
+  <em>body</em>
+}
+catch (e) {
+  <em>body</em>
+}
+finally {
+  <em>body</em>
+}
 </pre>
+Note that either the finally or the catch block may be empty:
+<pre>try {                 =&gt;  (try <em>body</em> (catch (e) <em>body</em>) ())
+  <em>body</em>
+}
+catch (e) {
+  body
+}
+</pre>
+As there are no types, only one catch statement per try block is allowed.
+<p></p>
 
 <h4>Basic Task</h4>
-<p>Write an interpreter that correctly handles classes, static variables, and static methods.
-You should be able to set value for variables, call methods, and use <tt>super</tt>.  </p>
+<p><strong>Step 1:</strong> Write an interpreter that correctly handles objects and classes.  You should be able to create
+objects (using a generic constructor), set values, call methods, and use values <tt>this</tt> and <tt>super</tt>.
+Solo programmers do not have
+to support user defined constructors.  Step 1 correctness will be the majority of your interpreter grade.</p>
 
-<p>Recall the suggested order from lecture to attack the problem.
-</p><ol>
-<li>Create helper functions to create a new class and instance (will be needed for part 5) and to access the portions of a class and instance.</li>
-<li>Everywhere when interpreting statements and expressions that an environment is passed as a parameter, you also have
-to pass parameters for class and instance.</li>
-<li>Change the top level interpreter code that you used in part 3 to return a class instead of returning an environment.</li>
-<li>Change the top level interpreter code that you wrote for part 3 to expect static and non-static declarations for variables and functions.</li>
-<li>Create a new top level for the interpreter that reads
-a list of class definitions, and stores each class with its definition in the environment.</li>
-<li>Create a function that takes a variable, a class, and an instance, and checks if the variable is in the list of
-class or instance variables and returns its value.</li>
-<li>Create a function that takes a variable, and environment, a class, and an instance, if the variable is in the environment,
-look it up, otherwise look in the class and instance variables. </li>
-<li>Create a function that takes the left hand side of a dot expression and returns a (class, instance) pair representing
-the class and instance of the left hand side.</li>
-<li>Create a function that takes a dot expression, calls the above function to evaluate the left hand side, and looks up the
-right hand side in the class/instance variables.</li>
-<li>Update your code that interprets a function definition to add a new function to the closure that looks up the function's class
-in the environment.</li>
-<li>Update the code that evaluates a function call to deal with objects and classes.</li>
-<li>Update the code that interprets an assignment statement so that it looks for the variable in the environment, class and instance variables</li>
-<li>Create a new <tt>interpret</tt> function.</li>
-</ol><p></p>
+<p><strong>Step 2:</strong> Add the ability to throw and catch exceptions.  You will need to add a <tt>throw</tt> continuation to
+your interpret routines.</p>
 
+<h4>For Teams:</h4>
 
+<p>Add user-defined constructors.  The constructor should be a method with the same name as the class, and it should be called by the
+new operator.  You should support constructor overloading, and you should support the class hierarchy by having the constructors
+for a class call the constructor for the super class using the <tt>super</tt> function call (or automatically if no <tt>super()</tt> is 
+present).  If no constructor has been created, allow for a generic constructor.  As a hint, make the constructor list be a separate environment
+of the class from the method environment.  That way constructors will not be inherited.</p>
 
 
 

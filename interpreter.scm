@@ -123,6 +123,8 @@
                  (loop (operand1 s) (operand2 s) e))))))
                
 
+; Takes a method stmt and parses it up to call the method on the parameters
+; Returns a value
 (define method-call
   (lambda (s e class instance)
     (cond
@@ -131,29 +133,36 @@
          (func-call (car (cdr dot)) (cdr (cdr s)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e)))
       (else (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))))
 
+; Performs a function call
+; Returns a value
 (define func-call
   (lambda (f-name params class instance e)
     (cond
       ((null? class) (error f-name "Function not declared before use"))
       ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
-                       (stmt-list (get-method-body f-name class e) (func-params (get-method-params f-name class e) params (push-layer (get-base-env e)) e class instance) return '() '() class instance))))))) 
+                       (let ((m-closure (get-method-body f-name class e)))
+                         (stmt-list m-closure (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance)))))))) 
 
-
+; Gets the method body corrisponding to the name passed in in a certain class
+; Returns the method closure
 (define get-method-body
   (lambda (m-name class e)
     (car (cdr (lookup-method m-name class e)))))
 
-(define get-method-params
-  (lambda (m-name class e)
-    (car (lookup-method m-name class e))))
+; Gets the method parameters from a method closure
+; Returns the list of parameters
+(define get-params
+  (lambda (m-closure)
+    (car m-closure)))
 
+; Takes the formal parameters and the values and returns the new environment 
 (define func-params 
   (lambda (vars params e  oldenv class instance)
     (cond
       ((and (null? vars) (null? params)) e)
       ((or (null? vars) (null? params)) (error 'func-params "Function input does not match parameters required"))
-      ((eq? (car vars) '&) 
+      ((eq? (operator vars) '&) 
        (if (and (list? (car params)) (eq? (operator (car params)) 'dot))
            (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (dot-var-lookup (car params) oldenv class instance #t) e) oldenv class instance)
            (func-params (cdr (cdr vars)) (cdr params) (bind-pointer (car (cdr vars)) (lookup-var (car params) class instance oldenv #t) e) oldenv class instance)))

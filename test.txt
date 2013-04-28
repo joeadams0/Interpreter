@@ -1,15 +1,25 @@
-class Rectangle {
-	static var poop = 20;
-  static swap(&x, &y){
-	var temp = x;
-	x = y;
-	y = temp;
+class A {
+  var x = 6;
+  var y = 7;
+
+  prod() {
+    return this.x * this.y;
   }
-  
-  static main(){
-	  var x = 10;
-	  var y = 5;
-	  swap(x,Rectangle.poop);
-	  return x;
+
+  set2(a, b) {
+    x = a;
+    y = b;
+  }
 }
+
+class B extends A {
+  set1(a) {
+    set2(a, a);
+  }
+
+  static main () {
+    var b = new B();
+    b.set1(10);
+    return b.prod();
+  }
 }
