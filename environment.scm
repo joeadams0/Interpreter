@@ -31,8 +31,19 @@
       (()())
       (()())
       ()
-      ()  )))
+      (()())  )))
 
+(define new-instance
+  (lambda (class-name e)
+    (initialize (lookup-instance-vars class-name e) '(()()))))
+
+(define initialize
+  (lambda (class-vars instance)
+    (cond 
+      ((null? (first-var class-vars)) instance)
+      ((list? (first-value class-vars #t)) (initialize (rest-layer class-vars (set-var (first-var class-vars) (first-value class-vars #f) instance #f))))
+      (else (initialize (rest-layer class-vars) (set-var (first-var class-vars) (first-value class-vars #t) instance #t))))))
+      
 ; DANIEL
 ; Class structure -> ( ((static var names)(static var values))  ((method names)(method closures))  (parent)  (instance variable names))
 ; Sets the parent of the class
@@ -54,18 +65,18 @@
     (cons item '())))
 
 ; Adds a variable name to the instance-variable list
-; (set-instance-variable 'poop '((()())()()())) -> ((()())()()(poop))
+; (set-instance-variable 'poop #f '((()())()()())) -> ((()())()()((poop) (#f)))
 ; Return new class
 ; No environment
-(define set-instance-variable 
-  (lambda (var-name class)
+(define bind-instance-variable 
+  (lambda (var-name value class )
     (cons    ; put the first part of the class onto the newly re-created rest of it
      (car class)
      (cons  ; put the second part of the class onto the newly re-created rest of it
       (cadr class)
       (cons  ; put the third part of the class onto the newly edited last part of the class
        (caddr class)  ; the 3rd part
-       (enlist (cons var-name (cadddr class)))))))) ; add the variable to the 4th part of class
+       (enlist (set-var var-name value (cadddr class) #f))))))) ; add the variable to the 4th part of class
       
 ; ------------------------------------------------------------------------------
 ; BIND-XXX FUNCTIONS
@@ -112,6 +123,12 @@
 
 ; ------------------------------------------------------------------------------
 ; LOOKUP-XXX FUNCTIONS
+
+(define set-var
+  (lambda (var-name value l box?)
+    (cond 
+      (box? (cons (cons var-name (car l)) (enlist (cons (box value) (car (cdr l))))))
+      (else (cons (cons var-name (car l)) (enlist (cons value (car (cdr l)))))))))
 
 (define lookup-method
   (lambda (method class e)
@@ -163,6 +180,7 @@
   (lambda (var class instance e reference?)
     (cond
       ((not (null? (lookup var e reference?))) (lookup var e reference?))
+      ((not (null? (lookup-instance-var var instance reference?))) (lookup-instance-var var instance reference?))
       (else (lookup-static-var var class instance e reference?)))))
 
 (define lookup-static-var 
@@ -171,6 +189,17 @@
       ((null? class) '())
       ((null? (lookup-layer var (car class) ref?)) (lookup-static-var var (lookup-class (lookup-parent class instance) e) instance e ref?))
       (else (lookup-layer var (car class) ref?)))))
+
+(define lookup-instance-var
+  (lambda (var instance ref?)
+    (cond
+      ((null? instance) '())
+      ((eq? var (first-var instance)) (first-value instance ref?))
+      (else (lookup-instance-var var (rest-layer instance) ref?)))))
+
+(define lookup-instance-vars
+  (lambda (class-name e)
+    (cadddr (lookup-class class-name e))))
 ; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------

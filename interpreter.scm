@@ -6,7 +6,12 @@
 (define interpret
   (lambda (filename class-name)
     (let ((env (class-list (parser filename) (new-environment))))
-      (func-call 'main '() (lookup-class class-name env) '() env))))
+      (let ((val (func-call 'main '() (lookup-class class-name env) '() env)))
+        (if (boolean? val)
+            (if val
+                'true
+                'false)
+            val)))))
 
 ; Parses the class list
 ; Returns an environment with all of th classes in it
@@ -66,11 +71,14 @@
 
 ; Adds an instance variable
 ; Returns the class
+
 (define instance-var-dec
   (lambda (field class e)
     (cond
       ((not (null? (lookup-var (car (cdr field)) class '() e #f))) (error 'static-var-dec "Variable already exists"))
-      (else (bind-instance-var (car (cdr field)) class)))))
+      ((and (list? (car (cdr (cdr field)))) (eq? 'new (operator (car (cdr (cdr field)))))) 
+                   (bind-instance-variable (car (cdr field)) (new-instance (car (cdr (cdr field)))) class #f))
+      (else (bind-instance-variable (car (cdr field)) (value (car (cdr (cdr field))) e class '()) class)))))
 
 ; (params, body, class function)
 ; Returns environemnt
@@ -141,14 +149,14 @@
       ((null? class) (error f-name "Function not declared before use"))
       ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
-                       (let ((m-closure (get-method-body f-name class e)))
-                         (stmt-list m-closure (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance)))))))) 
+                       (let ((m-closure (lookup-method f-name class e)))
+                         (stmt-list (get-method-body m-closure) (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance)))))))) 
 
 ; Gets the method body corrisponding to the name passed in in a certain class
 ; Returns the method closure
 (define get-method-body
-  (lambda (m-name class e)
-    (car (cdr (lookup-method m-name class e)))))
+  (lambda (m-closure)
+    (car (cdr m-closure))))
 
 ; Gets the method parameters from a method closure
 ; Returns the list of parameters
@@ -300,12 +308,13 @@
       (else #f))))
 
 ; Evaluates the dot expression
-; Return the class that the statment evaluates to
+; Returns (class instance rhs)
 ; x.y = 10 (dot-eval x
 (define dot-eval
   (lambda (s e class instance)
     (cons (lhs-eval (car (cdr s)) e class instance) (list (car (cdr (cdr s)))))))
 
+; Returns (class instance)
 (define lhs-eval
   (lambda (s e class instance)
     (cond
@@ -313,13 +322,19 @@
        (cond
          ((eq? 'this s) (cons class (list instance)))
          ((eq? 'super s) (cons (lookup-parent class instance) (list instance)))
-         (else (cons s '(()))))))))
+         (else (cons class (list (lookup-var s class instance e #f))))))
+      ((eq? (operator s) 'new) (new-instance (car (cdr s)) e))
+      (else (cons class (list (dot-var-lookup s e class instance #f)))))))
 
 (define dot-var-lookup
   (lambda (s e class instance ref?)
     (let ((dot (dot-eval s e class instance)))
-      (if (null? (lookup-var (car (cdr dot)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)) 
+      (if (null? (lookup-var (car (cdr dot)) (car (car dot)) (car (cdr (car dot))) e ref?)) 
           (error 'dot-var-lookup "Variable does not exist")
-          (lookup-var (car (cdr dot)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)))))
+          (lookup-var (car (cdr dot)) 
+                      (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)))))
+
+
+    
     
     
