@@ -7,7 +7,14 @@ class A {
   }
 
  static main(){
-	var a = new A();
-	return 5;
+	try{
+		var z = 2;
+		z = z + 2;
+		throw z;
+	
+	}
+	catch (e) {
+		return 5;
+	}
  }
 }

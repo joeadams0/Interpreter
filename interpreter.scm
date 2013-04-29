@@ -215,8 +215,8 @@
 ; Adds another layer to the environment
 ; Starts statement list on that block
 (define start-block
-  (lambda (s e return break continue)
-    (stmt-list (cdr s) (push-layer e) return (lambda (e) (break (end-block e))) (lambda (e2) (continue (pop-layer e2)))))) 
+  (lambda (s e return break continue class instance throw)
+    (stmt-list (cdr s) (push-layer e) return (lambda (e) (break (end-block e))) (lambda (e2) (continue (pop-layer e2))) class instance throw))) 
 
 (define end-block
   (lambda (e)
@@ -346,7 +346,7 @@
 
 (define do-try
   (λ (s e return break continue class instance)
-    (define exception (call/cc (lambda (throw) (stmt (cadr s) e return break continue class instance throw))))
+    (define exception (call/cc (lambda (throw) (start-block (cadr s) e return break continue throw))))
     (cond
       ((null? (caddr s)) (do-finally (cadddr s) e return break continue class instance)) ; is the catch null?
       ((null? exception) (do-finally (cadddr s) e return break continue class instance)) ; is the exception null?
