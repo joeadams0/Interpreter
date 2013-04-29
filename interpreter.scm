@@ -138,7 +138,7 @@
     (cond
       ((dot? (car (cdr s))) 
        (let ((dot (dot-eval (car (cdr s)) e class instance)))
-         (func-call (car (cdr dot)) (cdr (cdr s)) (lookup-class (car (car dot)) e) (car (cdr (car dot))) e)))
+         (func-call (car (cdr dot)) (cdr (cdr s)) (car (car dot)) (car (cdr (car dot))) e)))
       (else (func-call (car (cdr s)) (cdr (cdr s)) class instance e)))))
 
 ; Performs a function call
@@ -200,7 +200,7 @@
 (define assign-stmt
   (lambda (s e class instance)
     (cond
-      ((eq? 'dot (car (operand1 s)))
+      ((and (list? (operand1 s)) (eq? 'dot (car (operand1 s))))
        (if (null? (dot-var-lookup (operand1 s) e class instance #t))
            (error 'assign-stmt "Variable not declared")
            (set-box! (dot-var-lookup (operand1 s) e class instance #t) (value (operand2 s) e class instance))))
@@ -208,7 +208,7 @@
        (if (null? (lookup-var (operand1 s) class instance e #f)) 
            (error 'assign-stmt "Variable not declared")
            ; Return the value consed onto a list containing the environment
-           (else (update-binding (operand1 s) (value (operand2 s) e class instance) e class instance))))))) 
+           (set-box! (lookup-var (operand1 s) class instance e #t) (value (operand2 s) e class instance)))))))
 
 ; Adds another layer to the environment
 ; Starts statement list on that block
@@ -339,8 +339,7 @@
     (let ((dot (dot-eval s e class instance)))
       (if (null? (lookup-var (car (cdr dot)) (car (car dot)) (car (cdr (car dot))) e ref?)) 
           (error 'dot-var-lookup "Variable does not exist")
-          (lookup-var (car (cdr dot)) 
-                      (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)))))
+          (lookup-var (car (cdr dot)) (car (car dot)) (car (cdr (car dot))) e ref?)))))
 
 
     
