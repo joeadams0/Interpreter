@@ -346,7 +346,7 @@
 
 (define do-try
   (λ (s e return break continue class instance)
-    (define exception (call/cc (lambda (throw) (start-block (cadr s) e return break continue throw))))
+    (define exception (call/cc (lambda (throw) (start-block (cadr s) e return break continue class instance throw))))
     (cond
       ((null? (caddr s)) (do-finally (cadddr s) e return break continue class instance)) ; is the catch null?
       ((null? exception) (do-finally (cadddr s) e return break continue class instance)) ; is the exception null?
