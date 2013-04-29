@@ -19,8 +19,9 @@ class B extends A {
 
   static main () {
     var count = 1;
-if (count == 2)
+    while (count == 1){
+	count = 2;
+    }
     return count;
-return 3;
   }
 }
