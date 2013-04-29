@@ -35,14 +35,14 @@
 
 (define new-instance
   (lambda (class-name e)
-    (initialize (lookup-instance-vars class-name e) '(()()))))
+    (cons (initialize (lookup-instance-vars class-name e)) (list (list class-name)))))
 
 (define initialize
-  (lambda (class-vars instance)
+  (lambda (class-vars)
     (cond 
-      ((null? (first-var class-vars)) instance)
-      ((list? (first-value class-vars #t)) (initialize (rest-layer class-vars (set-var (first-var class-vars) (first-value class-vars #f) instance #f))))
-      (else (initialize (rest-layer class-vars) (set-var (first-var class-vars) (first-value class-vars #t) instance #t))))))
+      ((null? (first-var class-vars)) '())
+      ((list? (first-value class-vars #t))  (cons (first-value class-vars #t) (initialize (rest-layer class-vars))))
+      (else (cons (box (first-value class-vars #t)) (initialize (rest-layer class-vars)))))))
       
 ; DANIEL
 ; Class structure -> ( ((static var names)(static var values))  ((method names)(method closures))  (parent)  (instance variable names))
@@ -180,7 +180,8 @@
   (lambda (var class instance e reference?)
     (cond
       ((not (null? (lookup var e reference?))) (lookup var e reference?))
-      ((not (null? (lookup-instance-var var instance reference?))) (lookup-instance-var var instance reference?))
+      ((and (not (null? instance)) (not (null? (lookup-instance-var var (cons (car (cadddr (lookup-class (car (car (cdr instance))) e))) (list (car instance))) reference?)))) 
+       (lookup-instance-var var (cons (car (cadddr (lookup-class (car (car (cdr instance))) e))) (list (car instance))) reference?))
       (else (lookup-static-var var class instance e reference?)))))
 
 (define lookup-static-var 
@@ -193,7 +194,7 @@
 (define lookup-instance-var
   (lambda (var instance ref?)
     (cond
-      ((null? instance) '())
+      ((null? (car instance)) '())
       ((eq? var (first-var instance)) (first-value instance ref?))
       (else (lookup-instance-var var (rest-layer instance) ref?)))))
 
@@ -298,10 +299,10 @@
 
 (define update-binding
   (lambda (var value e class instance)
-    (cond
-      ((not (null? (lookup var e #t))) (update-binding-env var value e))
-      ((not (null? (lookup-var var class '() (new-environment) #t))) (update-static-var var value class))
-      ((not (null? (lookup-var var (new-class) instance (new-environment) #t))) (update-instance-var var value class instance)))))
+    (let ((ref (lookup-var var (new-class) instance (new-environment) #t)))
+      (display var)
+      (newline)
+      (set-box! ref value))))
 
 (define update-static-var 
   (lambda (var value class)

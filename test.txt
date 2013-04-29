@@ -3,11 +3,11 @@ class A {
   var y = true;
 
   prod() {
-    return this.x * this.y;
+    return x;
   }
 
  static main(){
 	var a = new A();
-	return a.y;
+	return a.prod();
  }
 }
