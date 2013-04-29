@@ -18,8 +18,16 @@ class B extends A {
   }
 
   static main () {
-    var b = new B();
-    b.set1(10);
-    return b.prod();
+    var a = new B();
+    var boo = true;
+    var count = 1;
+    while(boo){
+        a.set1(count);
+	count = count +1;
+	if(count == 200){
+	    boo = false;
+	}
+    }
+    return a.prod();
   }
 }
