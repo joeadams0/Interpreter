@@ -19,7 +19,7 @@
   (lambda (l e)
     (cond
       ((null? l) e)
-      (else (class-list (cdr l) (class-declare (car l) e))))))
+      (else (class-list (cdr l) (class-declare (car l) e) )))))
 
 ; Interpretes the statement list
 ; p is a parsetree, e is the environment
@@ -34,7 +34,7 @@
 ; Returns an environment
 (define class-declare
   (lambda (class e)
-    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (get-p class) (new-class)) e) e)))
+    (bind-class (car (cdr class)) (add-fields (car (cdr (cdr (cdr class)))) (set-parent (get-p class) (new-class)) e (car (cdr class))) e)))
 
 (define get-p
   (lambda (class)
@@ -45,20 +45,20 @@
 ; Parses the class fields
 ; Returns a class
 (define add-fields
-  (lambda (l class e)
+  (lambda (l class e class-name)
     (cond
       ((null? l) class)
-      (else (add-fields (cdr l) (new-field (car l) class e) e)))))
+      (else (add-fields (cdr l) (new-field (car l) class e class-name) e class-name)))))
 
 ; Adds a new field to class
 ; Returns the class
 (define new-field
-  (lambda (field class e)
+  (lambda (field class e class-name)
     (cond
       ((eq? (operator field) 'static-var) (static-var-dec field class e))
-      ((eq? (operator field) 'static-function) (method-dec field class e))
+      ((eq? (operator field) 'static-function) (method-dec field class e class-name))
       ((eq? (operator field) 'var) (instance-var-dec field class e))
-      ((eq? (operator field) 'function) (method-dec field class e)))))
+      ((eq? (operator field) 'function) (method-dec field class e class-name)))))
 
 ; Adds a static var
 ; returns the class
@@ -77,14 +77,20 @@
     (cond
       ((not (null? (lookup-var (car (cdr field)) class '() e #f))) (error 'static-var-dec "Variable already exists"))
       ((and (list? (car (cdr (cdr field)))) (eq? 'new (operator (car (cdr (cdr field)))))) 
-                   (bind-instance-variable (car (cdr field)) (new-instance (car (cdr (cdr field)))) class #f))
-      (else (bind-instance-variable (car (cdr field)) (value (car (cdr (cdr field))) e class '()) class)))))
+       (bind-instance-variable (car (cdr field)) (new-instance (car (cdr (cdr field))) e) (cdr) class #f))
+      (else (bind-instance-variable (car (cdr field)) (value (car (cdr (cdr field))) e class '()) class))))) 
 
 ; (params, body, class function)
 ; Returns environemnt
 (define method-dec
-  (lambda (field class e)
+  (lambda (field class e class-name)
     (cond
+      ((eq? class-name (car (cdr field)))
+       (bind-constructor (car (cdr field)) 
+                    (cons (car (cdr (cdr field))) 
+                          (cons (car (cdr (cdr (cdr field)))) 
+                                (list (lambda (e) (lookup-class (car (cdr (field))) e)))))
+                    class))
       ((not (null? (lookup-method (car (cdr field)) class e))) (error 'func-declare "Method already exists"))
       ((bind-method (car (cdr field)) 
                     (cons (car (cdr (cdr field))) 
@@ -146,11 +152,14 @@
 (define func-call
   (lambda (f-name params class instance e)
     (cond
+      ((eq? f-name 'super) (super-call class params instance e))
       ((null? class) (error f-name "Function not declared before use"))
       ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
                        (let ((m-closure (lookup-method f-name class e)))
                          (stmt-list (get-method-body m-closure) (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance)))))))) 
+
+
 
 ; Gets the method body corrisponding to the name passed in in a certain class
 ; Returns the method closure
@@ -192,7 +201,7 @@
       ; Just declare statement
       ((null? (operand2 s)) (bind (operand1 s) '(1) e))
       ; declare and assign
-      (else (bind (operand1 s) (value (operand2 s) e class instance) e)))))
+      (else (bind (operand1 s) (value (operand2 s) e class instance) e))))) 
 
 ; Interpretes the variable assignment statement
 ; s is the statement, e is the environment
@@ -328,7 +337,7 @@
        (cond
          ((eq? 'this s) (cons class (list instance)))
          ((eq? 'super s) (cons (lookup-parent class instance) (list instance)))
-         (else (cons class (list (lookup-var s class instance e #f))))))
+         (else  (cons class (list (lookup-var s class instance e #f))))))
       ((eq? (operator s) 'new) (new-instance (car (cdr s)) e))
       (else 
        (let ((dot (dot-var-lookup (operand1 s) e class instance #f)))
@@ -341,6 +350,36 @@
           (error 'dot-var-lookup "Variable does not exist")
           (lookup-var (car (cdr dot)) (car (car dot)) (car (cdr (car dot))) e ref?)))))
 
+(define new-stmt
+  (lambda (s e)
+    (constructor-call (car (cdr s)) (cdr (cdr s)) (lookup-class (car (cdr s)) e) (new-instance (operand1 s) e) e)))
+
+(define constructor-call
+  (lambda (class-name params class instance e)
+    (let ((instance (new-instance class-name e)) (closure (lookup-constructor class-name params e)))
+      (if (null? closure)
+          instance
+          (stmt-list (get-method-body closure)  
+                     (func-params (get-params closure) params (push-layer (get-base-env e)) e class instance)
+                     '()
+                     '()
+                     '()
+                     (lookup-class class-name e)
+                     instance))
+      instance
+      )))
+
+(define super-call
+  (lambda (class params instance e)
+    (let ((closure (lookup-constructor (lookup-parent class instance) params e)))
+      (stmt-list (get-method-body closure)  
+                 (func-params (get-params closure) params (push-layer (get-base-env e)) e class instance)
+                 '()
+                 '()
+                 '()
+                 (lookup-class (lookup-parent class instance) e)
+                 instance) instance)))
+    
 
     
     

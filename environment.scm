@@ -31,7 +31,9 @@
       (()())
       (()())
       ()
-      (()())  )))
+      (()())  
+      ()
+      )))
 
 (define new-instance
   (lambda (class-name e)
@@ -83,7 +85,9 @@
       (cadr class)
       (cons  ; put the third part of the class onto the newly edited last part of the class
        (caddr class)  ; the 3rd part
-       (enlist (set-var var-name value (cadddr class) #f))))))) ; add the variable to the 4th part of class
+       (cons
+        (set-var var-name value (cadddr class) #f)
+        (list (cdr (cdddr class))))))))) ; add the variable to the 4th part of class
       
 ; ------------------------------------------------------------------------------
 ; BIND-XXX FUNCTIONS
@@ -102,6 +106,12 @@
        (enlist (cons closure (cadadr class))))
       (cddr class)))))
 
+(define bind-constructor
+  (lambda (method-name closure class)
+    (append (all-but-last class) (list (append (cadr (cdddr class)) (list closure))))))
+    
+(define (all-but-last l) (reverse (cdr (reverse l))))
+    
 ; Binds a variable to the static variables list in the class
 ; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
 ; Returns the new class
@@ -218,6 +228,22 @@
 (define get-inst-vars
   (lambda (class l)
     (append l (car (cadddr class)))))
+
+(define lookup-constructor
+ (lambda (class-name params e)
+   (match-params (get-constructors (lookup-class class-name e)) params)))
+
+(define get-constructors
+ (lambda (class)
+   (cadr (cdddr class))))
+
+(define match-params
+  (lambda (constructors params)
+    (cond
+      ((null? constructors) '())
+      (else (if (eq? (length (get-params (car constructors))) (length params))
+                (car constructors)
+                (match-params (cdr constructors) params))))))
 
 ; ------------------------------------------------------------------------------
 
