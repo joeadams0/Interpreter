@@ -8,6 +8,6 @@ class A {
 
  static main(){
 	var a = new A();
-	return a.prod();
+	return 5;
  }
 }

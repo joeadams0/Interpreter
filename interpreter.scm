@@ -152,7 +152,7 @@
       ((null? (lookup-method f-name  class e)) (func-call f-name params (lookup-class (lookup-parent class instance) e) instance e))
       (else (call/cc (lambda (return)
                        (let ((m-closure (lookup-method f-name class e)))
-                         (stmt-list (get-method-body m-closure) (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance)))))))) 
+                         (stmt-list (get-method-body m-closure) (func-params (get-params m-closure) params (push-layer (get-base-env e)) e class instance) return '() '() class instance '())))))))) 
 
 ; Gets the method body corrisponding to the name passed in in a certain class
 ; Returns the method closure
