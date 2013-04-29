@@ -25,10 +25,10 @@
 ; p is a parsetree, e is the environment
 ; returns an environment
 (define stmt-list
-  (lambda (p e return break continue class instance)
+  (lambda (p e return break continue class instance throw)
     (cond
       ((null? p) (end-block e))
-      (else (stmt-list (cdr p) (stmt (car p) e return break continue class instance) return break continue class instance)))))
+      (else (stmt-list (cdr p) (stmt (car p) e return break continue class instance throw) return break continue class instance throw)))))
 
 ; Declares a new class
 ; Returns an environment
@@ -101,25 +101,25 @@
       ((eq? (operator s) '=)        (assign-stmt s e class instance) e)
       ((eq? (operator s) 'var)      (define-stmt s e class instance))
       ((eq? (operator s) 'break)    (break e))
-      ((eq? (operator s) 'if)       (if-stmt s e return break continue class instance))
-      ((eq? (operator s) 'begin)    (start-block s e return break continue class instance))
+      ((eq? (operator s) 'if)       (if-stmt s e return break continue class instance throw))
+      ((eq? (operator s) 'begin)    (start-block s e return break continue class instance throw))
       ((eq? (operator s) 'continue) (continue e))
       ((eq? (operator s) 'function) (function-declare s e class instance))
       ((eq? (car s) 'funcall)       (method-call s e class instance) e)
       ((eq? (operator s) 'try)      (do-try s e return break continue class instance))
-      ((eq? (operator s) 'throw)    (throw e))
-      (else ((stmt-f s) s e return  class instance)))))
+      ((eq? (operator s) 'throw)    (throw (operator1 s)))
+      (else ((stmt-f s) s e return class instance)))))
 
 ; Interpretes the if statement
 ; s is the statement, e is the environment 
 ; returns an environment
 (define if-stmt
-  (lambda (s e return break continue )
+  (lambda (s e return break continue throw)
     (cond
       ; If it is an if statement 
-      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e return break continue))
+      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e return break continue throw))
       ; else statement
-      (stmt s e))))
+      (stmt s e return break continue class instance throw))))
 
 ; Interpretes the while statements
 (define while-stmt
@@ -128,7 +128,7 @@
                (letrec ((loop (lambda (cond body env)
                                 (if (value cond env)    
                                     (loop cond body (stmt body e return break (lambda (e2) 
-                                                                                (loop cond body e2))))
+                                                                                (loop cond body e2)) throw))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
                
@@ -338,5 +338,15 @@
 
 (define do-try
   (λ (s e return break continue class instance)
-    (call/cc (lambda (throw) 1))))
+    (define exception (call/cc (lambda (throw) (stmt (cadr s) e return break continue class instance throw))))
+    (cond
+      ((null? (caddr s)) (do-finally (cadddr s) e return break continue class instance)) ; is the catch null?
+      ((null? exception) (do-finally (cadddr s) e return break continue class instance)) ; is the exception null?
+      (else (do-catch (caddr s) e return break continue class instance exception)))))
+
+(define do-catch
+  (λ (s e return break continue class instance ex)
+    (
+
+
 
