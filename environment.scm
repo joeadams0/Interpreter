@@ -31,18 +31,27 @@
       (()())
       (()())
       ()
-      (()())  )))
+      (()())  
+      ()
+      )))
 
 (define new-instance
   (lambda (class-name e)
-    (cons (initialize (lookup-instance-vars class-name e)) (list (list class-name)))))
+    (cons (initialize class-name e) (list (list class-name)))))
 
 (define initialize
-  (lambda (class-vars)
+  (lambda (class-name e)
     (cond 
-      ((null? (first-var class-vars)) '())
-      ((list? (first-value class-vars #t))  (cons (first-value class-vars #t) (initialize (rest-layer class-vars))))
-      (else (cons (box (first-value class-vars #t)) (initialize (rest-layer class-vars)))))))
+      ((not (null? (lookup-parent (lookup-class class-name e) '()))) 
+       (initialize-class (lookup-instance-vars class-name e) (initialize (lookup-parent (lookup-class class-name e) '()) e)))
+      (else (initialize-class (lookup-instance-vars class-name e) '())))))
+
+(define initialize-class
+  (lambda (class-vars instance)
+    (cond 
+      ((null? (first-var class-vars)) instance)
+      ((list? (first-value class-vars #t)) (initialize (rest-layer class-vars) (append instance (list (first-value class-vars #t)))))
+      (else (initialize-class (rest-layer class-vars) (append instance (list (box (first-value class-vars #t)))))))))
       
 ; DANIEL
 ; Class structure -> ( ((static var names)(static var values))  ((method names)(method closures))  (parent)  (instance variable names))
@@ -76,7 +85,9 @@
       (cadr class)
       (cons  ; put the third part of the class onto the newly edited last part of the class
        (caddr class)  ; the 3rd part
-       (enlist (set-var var-name value (cadddr class) #f))))))) ; add the variable to the 4th part of class
+       (cons
+        (set-var var-name value (cadddr class) #f)
+        (list (cdr (cdddr class))))))))) ; add the variable to the 4th part of class
       
 ; ------------------------------------------------------------------------------
 ; BIND-XXX FUNCTIONS
@@ -95,6 +106,12 @@
        (enlist (cons closure (cadadr class))))
       (cddr class)))))
 
+(define bind-constructor
+  (lambda (method-name closure class)
+    (append (all-but-last class) (list (append (cadr (cdddr class)) (list closure))))))
+    
+(define (all-but-last l) (reverse (cdr (reverse l))))
+    
 ; Binds a variable to the static variables list in the class
 ; (bind-static-var 'poop 10 '((()())()()())) -> (((poop)(#&10))()()())
 ; Returns the new class
@@ -180,8 +197,8 @@
   (lambda (var class instance e reference?)
     (cond
       ((not (null? (lookup var e reference?))) (lookup var e reference?))
-      ((and (not (null? instance)) (not (null? (lookup-instance-var var (cons (car (cadddr (lookup-class (car (car (cdr instance))) e))) (list (car instance))) reference?)))) 
-       (lookup-instance-var var (cons (car (cadddr (lookup-class (car (car (cdr instance))) e))) (list (car instance))) reference?))
+      ((and (not (null? instance)) (not (null? (lookup-instance-var var (cons (get-instance-variables class e) (list (car instance))) reference?)))) 
+       (lookup-instance-var var (cons (get-instance-variables class e) (list (car instance))) reference?))
       (else (lookup-static-var var class instance e reference?)))))
 
 (define lookup-static-var 
@@ -201,6 +218,33 @@
 (define lookup-instance-vars
   (lambda (class-name e)
     (cadddr (lookup-class class-name e))))
+
+(define get-instance-variables
+  (lambda (class e)
+    (if (not (null? (lookup-parent class '()))) 
+        (get-inst-vars class (get-instance-variables (lookup-class (lookup-parent class '()) e) e))
+        (get-inst-vars class '()))))
+
+(define get-inst-vars
+  (lambda (class l)
+    (append l (car (cadddr class)))))
+
+(define lookup-constructor
+ (lambda (class-name params e)
+   (match-params (get-constructors (lookup-class class-name e)) params)))
+
+(define get-constructors
+ (lambda (class)
+   (cadr (cdddr class))))
+
+(define match-params
+  (lambda (constructors params)
+    (cond
+      ((null? constructors) '())
+      (else (if (eq? (length (get-params (car constructors))) (length params))
+                (car constructors)
+                (match-params (cdr constructors) params))))))
+
 ; ------------------------------------------------------------------------------
 
 ; ------------------------------------------------------------------------------
@@ -300,8 +344,6 @@
 (define update-binding
   (lambda (var value e class instance)
     (let ((ref (lookup-var var (new-class) instance (new-environment) #t)))
-      (display var)
-      (newline)
       (set-box! ref value))))
 
 (define update-static-var 

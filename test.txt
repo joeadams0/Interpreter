@@ -1,20 +1,25 @@
 class A {
   var x = 6;
-  var y = true;
+  var y = 7;
 
   prod() {
-    return x;
+    return this.x * this.y;
   }
 
- static main(){
-	try{
-		var z = 2;
-		z = z + 2;
-		throw z;
-	
-	}
-	catch (e) {
-		return 5;
-	}
- }
+  set2(a, b) {
+    x = a;
+    y = b;
+  }
+}
+
+class B extends A {
+  set1(a) {
+    set2(a, a);
+  }
+
+  static main () {
+    var b = new B();
+    b.set1(10);
+    return b.prod();
+  }
 }

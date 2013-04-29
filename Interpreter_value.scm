@@ -12,8 +12,8 @@
          ((eq? ex 'false) #f)
          ((null? (lookup-var ex class instance e #f)) (error 'value "Variable does not exist in scope"))
          (else (lookup-var ex class instance e #f))))
-      ((eq? (operator ex) 'dot) (dot-var-lookup ex e class instance #f))
-      ((eq? (operator ex) 'new) (new-instance (car (cdr ex)) e))
+      ((eq? (operator ex) 'dot)(dot-var-lookup ex e class instance #f))
+      ((eq? (operator ex) 'new) (new-stmt ex e))
       (else ((value-f ex e) ex e class instance)))))
 
 (define value-f
