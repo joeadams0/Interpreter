@@ -107,7 +107,7 @@
       ((eq? (operator s) 'function) (function-declare s e class instance))
       ((eq? (car s) 'funcall)       (method-call s e class instance) e)
       ((eq? (operator s) 'try)      (do-try s e return break continue class instance))
-      ((eq? (operator s) 'throw)    (throw (operator1 s)))
+      ((eq? (operator s) 'throw)    (throw (operand1 s)))
       (else ((stmt-f s) s e return class instance)))))
 
 ; Interpretes the if statement
@@ -202,10 +202,11 @@
 (define assign-stmt
   (lambda (s e class instance)
     (cond
-      ((eq? 'dot (car (operand1 s)))
-       (if (null? (dot-var-lookup (operand1 s) e class instance #t))
-           (error 'assign-stmt "Variable not declared")
-           (set-box! (dot-var-lookup (operand1 s) e class instance #t) (value (operand2 s) e class instance))))
+      ((if (pair? (operand1 s))
+       ((eq? 'dot (car (operand1 s)))
+        (if (null? (dot-var-lookup (operand1 s) e class instance #t))
+            (error 'assign-stmt "Variable not declared")
+            (set-box! (dot-var-lookup (operand1 s) e class instance #t) (value (operand2 s) e class instance))))))
       (else
        (if (null? (lookup-var (operand1 s) class instance e #f)) 
            (error 'assign-stmt "Variable not declared")
