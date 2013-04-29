@@ -18,13 +18,9 @@ class B extends A {
   }
 
   static main () {
-    var a = new A();
-    var boo = true;
     var count = 1;
-    while(count < 0){
-        a.set2(count, 8);
-	count = 21;
-    }
-    return a.prod();
+if (count == 2)
+    return count;
+return 3;
   }
 }
