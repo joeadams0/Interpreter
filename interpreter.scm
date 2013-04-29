@@ -96,16 +96,18 @@
 ; s is the statement, e is the environment
 ; returns an environment
 (define stmt
-  (lambda (s e return break continue class instance)
+  (lambda (s e return break continue class instance throw)
     (cond
-      ((eq? (operator s) '=) (assign-stmt s e class instance) e)
-      ((eq? (operator s) 'var) (define-stmt s e class instance))
-      ((eq? (operator s) 'break) (break e))
-      ((eq? (operator s) 'if) (if-stmt s e return break continue  class instance))
-      ((eq? (operator s) 'begin) (start-block s e return break continue  class instance))
+      ((eq? (operator s) '=)        (assign-stmt s e class instance) e)
+      ((eq? (operator s) 'var)      (define-stmt s e class instance))
+      ((eq? (operator s) 'break)    (break e))
+      ((eq? (operator s) 'if)       (if-stmt s e return break continue  class instance))
+      ((eq? (operator s) 'begin)    (start-block s e return break continue  class instance))
       ((eq? (operator s) 'continue) (continue e))
       ((eq? (operator s) 'function) (function-declare s e class instance))
-      ((eq? (car s) 'funcall) (method-call s e  class instance) e)
+      ((eq? (car s) 'funcall)       (method-call s e  class instance) e)
+      ((eq? (operator s) 'try)      (do-try s e return break continue class instance))
+      ((eq? (operator s) 'throw)    (throw e))
       (else ((stmt-f s) s e return  class instance)))))
 
 ; Interpretes the if statement
@@ -334,7 +336,7 @@
           (lookup-var (car (cdr dot)) 
                       (lookup-class (car (car dot)) e) (car (cdr (car dot))) e ref?)))))
 
+(define do-try
+  (λ (s e return break continue class instance)
+    1))
 
-    
-    
-    
