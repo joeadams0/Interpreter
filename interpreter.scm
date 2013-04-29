@@ -355,9 +355,9 @@
   (lambda (s e)
     (constructor-call (car (cdr s)) (cdr (cdr s)) (lookup-class (car (cdr s)) e) (new-instance (operand1 s) e) e)))
     
-define do-try
+(define do-try
   (λ (s e return break continue class instance)
-    (define exception (call/cc (lambda (throw) (start-block (cadr s) e return break continue class instance throw))))
+    (define exception (call/cc (lambda (throw) (start-block (list (cadr s)) e return break continue class instance throw))))
     (cond
       ((null? (caddr s)) (do-finally (cadddr s) e return break continue class instance)) ; is the catch null?
       ((null? exception) (do-finally (cadddr s) e return break continue class instance)) ; is the exception null?
