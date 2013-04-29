@@ -119,7 +119,7 @@
       ; If it is an if statement 
       ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e return break continue throw))
       ; else statement
-      (stmt s e return break continue class instance throw))))
+      (else (error if-stmt "Something bad")))))
 
 ; Interpretes the while statements
 (define while-stmt
@@ -354,7 +354,7 @@
 
 (define do-catch
   (λ (s e return break continue class instance ex)
-    (
+    1))
 
 
 
