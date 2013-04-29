@@ -202,9 +202,15 @@
 (define assign-stmt
   (lambda (s e class instance)
     (cond
-      ((null? (lookup-var (operand1 s) class instance e #f)) (error 'assign-stmt "Variable not declared"))
-      ; Return the value consed onto a list containing the environment
-      (else (update-binding (operand1 s) (value (operand2 s) e class instance) e class instance))))) 
+      ((eq? 'dot (car (operand1 s)))
+       (if (null? (dot-var-lookup (operand1 s) e class instance #t))
+           (error 'assign-stmt "Variable not declared")
+           (set-box! (dot-var-lookup (operand1 s) e class instance #t) (value (operand2 s) e class instance))))
+      (else
+       (if (null? (lookup-var (operand1 s) class instance e #f)) 
+           (error 'assign-stmt "Variable not declared")
+           ; Return the value consed onto a list containing the environment
+           (else (update-binding (operand1 s) (value (operand2 s) e class instance) e class instance))))))) 
 
 ; Adds another layer to the environment
 ; Starts statement list on that block
@@ -326,7 +332,9 @@
          ((eq? 'super s) (cons (lookup-parent class instance) (list instance)))
          (else (cons class (list (lookup-var s class instance e #f))))))
       ((eq? (operator s) 'new) (new-instance (car (cdr s)) e))
-      (else (cons class (list (dot-var-lookup s e class instance #f)))))))
+      (else 
+       (let ((dot (dot-var-lookup (operand1 s) e class instance #f)))
+         (cons (lookup-class (car (car (cdr dot))) e) (list dot)))))))
 
 (define dot-var-lookup
   (lambda (s e class instance ref?)
