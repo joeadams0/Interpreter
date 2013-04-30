@@ -123,7 +123,7 @@
   (lambda (s e return break continue class instance throw)
     (cond
       ; If it is an if statement 
-      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e class instance) (operand2 s) (operand3 s) e return break continue throw))
+      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e class instance) (operand2 s) (operand3 s) e return break continue class instance throw))
       ; else statement
       (else (error if-stmt "Something bad")))))
 
@@ -134,7 +134,9 @@
                (letrec ((loop (lambda (cond body env)
                                 (if (value cond env class instance)    
                                     (loop cond body (stmt body e return break (lambda (e2) 
-                                                                                (loop cond body e2)) class instance throw))
+                                                                                (loop cond body e2))))
+                                                          class
+                                                          instance throw))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
                
@@ -257,14 +259,14 @@
 ; Evaluates the if statement
 ; returns an environment
 (define if-eval
-  (lambda (bool then else e return break continue throw)
+  (lambda (bool then else e return break continue class instance throw)
     (cond
       ; Predicate evaluates to true, do the then stmt
-      (bool (stmt then e return break continue throw))
+      (bool (stmt then e return break continue class instance throw))
       ; If there isn't another if or else stmt, then return the environment
       ((null? else) e)
       ; Do the else stmt
-      (else (stmt else e return break continue throw)))))
+      (else (stmt else e return break continue class instance throw)))))
 
 ; Generates stmt-type? checkers for a given stmt
 ; Returns a function that can be called to check the type of the statement passed in

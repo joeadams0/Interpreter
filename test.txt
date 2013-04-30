@@ -2,6 +2,8 @@ class A {
   var x = 6;
   var y = 7;
 
+   A(x,y){
+  }
   prod() {
     return this.x * this.y;
   }
@@ -18,12 +20,11 @@ class B extends A {
   }
 
   static main () {
+    var a = new A();
     var count = 1;
-    var boo = true;
-    while (boo){
-	count = 2;
-	boo = false;
-    }
-    return count;
+    if(count<3){
+		a.set2(1, 8);
+	}
+    return a.prod();
   }
 }

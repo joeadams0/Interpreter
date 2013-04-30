@@ -87,7 +87,7 @@
        (caddr class)  ; the 3rd part
        (cons
         (set-var var-name value (cadddr class) #f)
-        (list (cdr (cdddr class))))))))) ; add the variable to the 4th part of class
+        (cdr (cdddr class)))))))) ; add the variable to the 4th part of class
       
 ; ------------------------------------------------------------------------------
 ; BIND-XXX FUNCTIONS
