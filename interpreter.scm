@@ -126,7 +126,7 @@
       ((eq? (operator s) 'if) (if-eval (value (operand1 s) e class instance) (operand2 s) (operand3 s) e return break continue class instance throw))
       ; else statement
       (else (error if-stmt "Something bad")))))
-
+ 
 ; Interpretes the while statements
 (define while-stmt
   (lambda (s e return class instance throw)
@@ -134,9 +134,10 @@
                (letrec ((loop (lambda (cond body env)
                                 (if (value cond env class instance)    
                                     (loop cond body (stmt body e return break (lambda (e2) 
-                                                                                (loop cond body e2))))
+                                                                                (loop cond body e2))
                                                           class
-                                                          instance throw))
+                                                          instance 
+                                                          throw))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
                

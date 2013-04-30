@@ -22,7 +22,7 @@ class B extends A {
   static main () {
     var a = new A();
     var count = 1;
-    if(count<3){
+    if(count == 1){
 		a.set2(1, 8);
 	}
     return a.prod();
