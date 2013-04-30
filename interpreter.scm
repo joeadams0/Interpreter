@@ -118,21 +118,23 @@
 ; s is the statement, e is the environment 
 ; returns an environment
 (define if-stmt
-  (lambda (s e return break continue )
+  (lambda (s e return break continue class instance)
     (cond
       ; If it is an if statement 
-      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e) (operand2 s) (operand3 s) e return break continue))
+      ((eq? (operator s) 'if) (if-eval (value (operand1 s) e class instance) (operand2 s) (operand3 s) e return break continue class instance))
       ; else statement
       (stmt s e))))
 
 ; Interpretes the while statements
 (define while-stmt
-  (lambda (s e return)
+  (lambda (s e return class instance)
     (call/cc (lambda (break) 
                (letrec ((loop (lambda (cond body env)
-                                (if (value cond env)    
+                                (if (value cond env class instance)    
                                     (loop cond body (stmt body e return break (lambda (e2) 
-                                                                                (loop cond body e2))))
+                                                                                (loop cond body e2))
+                                                          class
+                                                          instance))
                                     (break env)))))
                  (loop (operand1 s) (operand2 s) e))))))
                
@@ -222,8 +224,8 @@
 ; Adds another layer to the environment
 ; Starts statement list on that block
 (define start-block
-  (lambda (s e return break continue)
-    (stmt-list (cdr s) (push-layer e) return (lambda (e) (break (end-block e))) (lambda (e2) (continue (pop-layer e2)))))) 
+  (lambda (s e return break continue class instance)
+    (stmt-list (cdr s) (push-layer e) return (lambda (e) (break (end-block e))) (lambda (e2) (continue (pop-layer e2))) class instance))) 
 
 (define end-block
   (lambda (e)
@@ -256,14 +258,14 @@
 ; Evaluates the if statement
 ; returns an environment
 (define if-eval
-  (lambda (bool then else e return break continue)
+  (lambda (bool then else e return break continue class instance)
     (cond
       ; Predicate evaluates to true, do the then stmt
-      (bool (stmt then e return break continue))
+      (bool (stmt then e return break continue class instance))
       ; If there isn't another if or else stmt, then return the environment
       ((null? else) e)
       ; Do the else stmt
-      (else (stmt else e return break continue)))))
+      (else (stmt else e return break continue class instance)))))
 
 ; Generates stmt-type? checkers for a given stmt
 ; Returns a function that can be called to check the type of the statement passed in
